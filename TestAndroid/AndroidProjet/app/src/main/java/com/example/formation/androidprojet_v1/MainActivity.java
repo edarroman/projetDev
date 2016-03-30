@@ -48,9 +48,7 @@ public class MainActivity extends Activity {
     // Define ArcGIS Elements
     MapView mMapView;
     final String extern = Environment.getExternalStorageDirectory().getPath();
-    //Hervé final String tpkPath = "/ArcGIS/samples/OfflineRouting/SanDiego.tpk";
-    //final String tpkPath = "/Herve/ArcGIS/test_Forca.tpk";
-    final String tpkPath = "/ProjArcades/ArcGIS/arcades.tpk";
+    final String tpkPath = "/ProjArcades/ArcGIS/niveau_0_v2.tpk";
     TiledLayer mTileLayer = new ArcGISLocalTiledLayer(extern + tpkPath);
     GraphicsLayer mGraphicsLayer = new GraphicsLayer(RenderingMode.DYNAMIC);
 
@@ -93,14 +91,8 @@ public class MainActivity extends Activity {
             @Override
             public void run() {
                 // Get the external directory
-                //Herve String locatorPath = "/ArcGIS/samples/OfflineRouting/Geocoding/SanDiego_StreetAddress.loc";
-                //String locatorPath = "/Herve/ArcGIS/Geocoding/MGRS.loc";
                 String locatorPath = "/ProjArcades/ArcGIS/Geocoding/MGRS.loc";
-                //Hervé String networkPath = "/ArcGIS/samples/OfflineRouting/Routing/RuntimeSanDiego.geodatabase";
-                //String networkPath = "/Herve/ArcGIS/Routing/pays_forca.geodatabase";
                 String networkPath = "/ProjArcades/ArcGIS/Routing/base_de_donnees.geodatabase";
-                //Hervé String networkName = "Streets_ND";
-                //String networkName = "jdce_ND";
                 String networkName = "GRAPH_Final_ND";
 
                 // Attempt to load the local geocoding and routing data
@@ -129,6 +121,7 @@ public class MainActivity extends Activity {
 
         @Override
         public boolean onSingleTap(MotionEvent point) {
+            // Lorsque l'on touche une fois l'écran on palce un point
 
             if (mLocator == null) {
                 popToast("Locator uninitialized", true);
@@ -159,6 +152,7 @@ public class MainActivity extends Activity {
 
         @Override
         public boolean onDoubleTap(MotionEvent point) {
+            // Lorsque l'on touche deux fois l'écran rapidement le calcul d'itinéraire est lancé
 
             // Return default behavior if we did not initialize properly.
             if (mRouteTask == null) {
