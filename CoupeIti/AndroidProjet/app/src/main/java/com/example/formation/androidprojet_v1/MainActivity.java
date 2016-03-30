@@ -122,9 +122,9 @@ public class MainActivity extends Activity {
         @Override
         public boolean onSingleTap(MotionEvent point) {
             // Add  graphics to the screen
-            addPoint(441, 233);
-            addPoint(200, 300);
-            addPoint(297, 513);
+            addPoint(441, 233, 0);  // Z pas pris en compte --'
+            addPoint(200, 300, 0);
+            addPoint(297, 513, 1);
 
             // Lorsque l'on touche deux fois l'écran rapidement le calcul d'itinéraire est lancé
 
@@ -143,7 +143,7 @@ public class MainActivity extends Activity {
                 params.setOutSpatialReference(mapRef);
                 mStops.setSpatialReference(mapRef);
 
-                //Log.d("stops", mStops.toJson());
+                Log.d("stops", mStops.toJson());
 
                 // Set the stops and since we want driving directions,
                 // returnDirections==true
@@ -169,7 +169,7 @@ public class MainActivity extends Activity {
 
                 // Add the route shape to the graphics layer
                 Geometry geom = result.getRouteGraphic().getGeometry();
-                routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom, new SimpleLineSymbol(0x99990055, 5)));
+                routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom, new SimpleLineSymbol(0x99990066, 5)));
                 mMapView.getCallout().hide();
 
             } catch (Exception e) {
@@ -199,9 +199,12 @@ public class MainActivity extends Activity {
 
     /** Fonctions : **/
 
-    public boolean addPoint(float X, float Y) {
+    public boolean addPoint(float X, float Y, float Z) {
         // Add a graphic to the screen for the touch event
-        Point mapPoint = mMapView.toMapPoint(X, Y);
+        Point pt = new Point(X,Y,Z); // Z pas pris en compte
+        Point mapPoint = mMapView.toMapPoint(pt);
+
+        Log.d("MP", mapPoint.toString());
 
         Graphic graphic = new Graphic(mapPoint, new SimpleMarkerSymbol(Color.BLUE, 10, STYLE.DIAMOND));
         mGraphicsLayer.addGraphic(graphic);
@@ -212,6 +215,7 @@ public class MainActivity extends Activity {
             // be the same as the map.
             SpatialReference mapRef = mMapView.getSpatialReference();
             LocatorReverseGeocodeResult result = mLocator.reverseGeocode(mapPoint, 50, mapRef, mapRef);
+            //Log.d("result",result.toString());
 
         } catch (Exception e) {
             Log.v("Reverse Geocode", e.getMessage());
