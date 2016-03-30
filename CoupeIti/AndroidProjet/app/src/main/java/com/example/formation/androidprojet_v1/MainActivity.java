@@ -123,6 +123,7 @@ public class MainActivity extends Activity {
         public boolean onSingleTap(MotionEvent point) {
             // Add  graphics to the screen
             addPoint(441, 233);
+            addPoint(200, 300);
             addPoint(297, 513);
 
             // Lorsque l'on touche deux fois l'écran rapidement le calcul d'itinéraire est lancé
