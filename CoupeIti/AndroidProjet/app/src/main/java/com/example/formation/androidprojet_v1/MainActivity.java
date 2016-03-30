@@ -143,17 +143,25 @@ public class MainActivity extends Activity {
                 params.setOutSpatialReference(mapRef);
                 mStops.setSpatialReference(mapRef);
 
+                //Log.d("stops", mStops.toJson());
+
                 // Set the stops and since we want driving directions,
                 // returnDirections==true
                 params.setStops(mStops);
                 params.setReturnDirections(true);
 
+                //Log.d("Params", params.toString());
+
                 // Perform the solve
                 RouteResult results = mRouteTask.solve(params);
+
+                //Log.d("results", results.toString());
 
                 // Grab the results; for offline routing, there will only be one
                 // result returned on the output.
                 Route result = results.getRoutes().get(0);
+
+                //Log.d("result", result.toString());
 
                 // Remove any previous route Graphics
                 if (routeHandle != -1)
@@ -164,35 +172,6 @@ public class MainActivity extends Activity {
                 routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom, new SimpleLineSymbol(0x99990055, 5)));
                 mMapView.getCallout().hide();
 
-                // Get the list of directions from the result
-                List<RouteDirection> directions = result.getRoutingDirections();
-
-                // enable spinner to receive directions
-                dSpinner.setEnabled(true);
-
-                // Iterate through all of the individual directions items and
-                // create a nicely formatted string for each.
-                List<String> formattedDirections = new ArrayList<String>();
-                for (int i = 0; i < directions.size(); i++) {
-                    RouteDirection direction = directions.get(i);
-                    formattedDirections.add(String.format("%s\nGo %.2f %s For %.2f Minutes", direction.getText(),
-                            direction.getLength(), params.getDirectionsLengthUnit().name(), direction.getMinutes()));
-                }
-
-                // Add a summary String
-                formattedDirections.add(0, String.format("Total time: %.2f Mintues", result.getTotalMinutes()));
-
-                // Create a simple array adapter to visualize the directions in
-                // the Spinner
-                ArrayAdapter<String> adapter = new ArrayAdapter<String>(getApplicationContext(),
-                        android.R.layout.simple_spinner_item, formattedDirections);
-                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                dSpinner.setAdapter(adapter);
-
-                // Add a custom OnItemSelectedListener to the spinner to allow
-                // panning to each directions item.
-                dSpinner.setOnItemSelectedListener(new DirectionsItemListener(directions));
-
             } catch (Exception e) {
                 popToast("Solve Failed: " + e.getMessage(), true);
                 e.printStackTrace();
@@ -202,26 +181,6 @@ public class MainActivity extends Activity {
 
         public TouchListener(Context context, MapView view) {
             super(context, view);
-        }
-    }
-
-    class DirectionsItemListener implements OnItemSelectedListener {
-
-        private List<RouteDirection> mDirections;
-
-        public DirectionsItemListener(List<RouteDirection> directions) {
-            mDirections = directions;
-        }
-
-        @Override
-        public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
-            // We have to account for the added summary String
-            if (mDirections != null && pos > 0 && pos <= mDirections.size())
-                mMapView.setExtent(mDirections.get(pos - 1).getGeometry());
-        }
-
-        @Override
-        public void onNothingSelected(AdapterView<?> arg0) {
         }
     }
 
