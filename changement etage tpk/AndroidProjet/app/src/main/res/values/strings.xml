@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AndroidProjet_V1</string>
+
+    <string name="choix_etage">Choissisez un etage</string>
+    <string-array name="etage_array">
+        <item>Etage 0</item>
+        <item>Etage 1</item>
+        <item>Etage 2</item>
+        <item>Graphe complet</item>
+    </string-array>
+
+</resources>
