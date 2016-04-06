@@ -15,6 +15,6 @@ WriteXYCoordFields = 1
 100kmIDDefaultValue = AA
 GZDDefaultValue = 31N
 GZDand100kmIDOption = 2
-LocatorWorkspaceString = ProgID = esriDataSourcesFile.ShapefileWorkspaceFactory; Path = E:\Programmes\Docs\Exports_1\locator\MGRS\v101\
+LocatorWorkspaceString = ProgID = esriDataSourcesFile.ShapefileWorkspaceFactory; Path = E:\Programmes\Docs\Exports_v2\_1\locator\MGRS\v101\
 SafeLocatorName = MGRS
 UseMultithreading = False
