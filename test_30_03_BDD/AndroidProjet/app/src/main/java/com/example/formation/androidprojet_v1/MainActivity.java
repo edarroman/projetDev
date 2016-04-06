@@ -21,7 +21,6 @@ import com.esri.android.map.MapView;
 import com.esri.android.map.TiledLayer;
 import com.esri.android.map.ags.ArcGISLocalTiledLayer;
 import com.esri.core.geodatabase.Geodatabase;
-import com.esri.core.geodatabase.GeodatabaseFeatureTable;
 import com.esri.core.geometry.Geometry;
 import com.esri.core.geometry.Point;
 import com.esri.core.geometry.SpatialReference;
@@ -100,46 +99,64 @@ public class MainActivity extends Activity {
                 // Get the external directory
                 //Herve String locatorPath = "/ArcGIS/samples/OfflineRouting/Geocoding/SanDiego_StreetAddress.loc";
                 //String locatorPath = "/Herve/ArcGIS/Geocoding/MGRS.loc";
-                String locatorPath = "/Android/data/com.example.formation.androidprojet_v1/ArcGIS/Geocoding/MGRS_v2.loc";
+                String locatorPath = "/Android/data/com.example.formation.androidprojet_v1/ArcGIS/Geocoding/MGRS_v3.loc";
                 //Hervé String networkPath = "/ArcGIS/samples/OfflineRouting/Routing/RuntimeSanDiego.geodatabase";
                 //String networkPath = "/Herve/ArcGIS/Routing/pays_forca.geodatabase";
-                String networkPath = "/Android/data/com.example.formation.androidprojet_v1/ArcGIS/Routing/base_de_donnees_v2.geodatabase";
+                String networkPath = "/Android/data/com.example.formation.androidprojet_v1/ArcGIS/Routing/base_de_donnees_v3.geodatabase";
                 //Hervé String networkName = "Streets_ND";
                 //String networkName = "jdce_ND";
                 String networkName = "GRAPH_Final_ND";
 
                 // Attempt to load the local geocoding and routing data
                 try {
-                    Log.d("toto2", extern + locatorPath);
-                    Log.d("toto3", extern + networkPath);
                     mLocator = Locator.createLocalLocator(extern + locatorPath);
                     mRouteTask = RouteTask.createLocalRouteTask(extern + networkPath, networkName);
 
                     // open a local geodatabase
                     Geodatabase gdb = new Geodatabase(extern + networkPath);
 
-                    List lst_types = new Vector();
-                    List lst_mag = new Vector();
-                    long nbr_lignes = gdb.getGeodatabaseTables().get(0).getNumberOfFeatures();
-                    for(int l=1; l<=nbr_lignes; l++){
-                        Map<String, java.lang.Object> lignes = gdb.getGeodatabaseTables().get(0).getFeature(l).getAttributes();
-                        Object type = lignes.get("TYPE");
-                        lst_types.add(type);
-                        Object nom_mag = lignes.get("NOM");
-                        lst_mag.add(nom_mag);
-                    };
-                    Log.d("test", "liste :" + lst_types);
-                    Log.d("test2", "liste :" + lst_mag);
+                    List lst_types_niveau0 = new Vector();
+                    List lst_mag_niveau0 = new Vector();
+                    List lst_types_niveau1 = new Vector();
+                    List lst_mag_niveau1 = new Vector();
+                    List lst_types_niveau2 = new Vector();
+                    List lst_mag_niveau2 = new Vector();
+                    for(int i=0; i<=2; i++){
+                        long nbr_lignes = gdb.getGeodatabaseTables().get(i).getNumberOfFeatures();
+                        for(int l=1; l<=nbr_lignes; l++){
+                            Map<String, Object> lignes = gdb.getGeodatabaseTables().get(i).getFeature(l).getAttributes();
+                            Object type = lignes.get("TYPE");
+                            Object nom_mag = lignes.get("NOM");
+                            if (i == 0) {
+                                lst_types_niveau0.add(type);
+                                lst_mag_niveau0.add(nom_mag);
+                            }
+                            else if (i == 1) {
+                                lst_mag_niveau1.add(nom_mag);
+                                lst_types_niveau1.add(type);
+                            }
+                            else if (i == 2) {
+                                lst_mag_niveau2.add(nom_mag);
+                                lst_types_niveau2.add(type);
+                            }
+                        }
+                    }
+                    Log.d("test_niveau0", "lst_types_niveau0 :" + lst_types_niveau0);
+                    Log.d("test2_niveau0", "lst_mag_niveau0 :" + lst_mag_niveau0);
+                    Log.d("test_niveau1", "lst_types_niveau1 :" + lst_types_niveau1);
+                    Log.d("test2_niveau1", "lst_mag_niveau1 :" + lst_mag_niveau1);
+                    Log.d("test_niveau2", "lst_types_niveau2 :" + lst_types_niveau2);
+                    Log.d("test2_niveau2", "lst_mag_niveau2 :" + lst_mag_niveau2);
 
+/*
                     // get the tables in the database
-                    List table = gdb.getGeodatabaseTables();
+                    //Geodatabase table = gdb.getGeodatabaseTables().get(1).getGeodatabase();
                     // first table
-                    Object points0 = table.get(0);
-                    Log.d("toto4", "liste :" + table);
-                    Log.d("toto5", "liste :" + points0);
+                    //Object points0 = table.get(1).;
+                    //Log.d("toto5", "liste :" + points0);
 
                     // get the first table in the database
-                    GeodatabaseFeatureTable table0 = gdb.getGeodatabaseFeatureTableByLayerId(0);
+                    GeodatabaseFeatureTable table0 = gdb.getGeodatabaseFeatureTableByLayerId(1);
                     //get the fields of the table
                     List fields = table0.getFields();
                     Log.d("toto6", "liste :" + fields);
@@ -147,6 +164,7 @@ public class MainActivity extends Activity {
                     // get elements where TYPE == Services
                     Object colonne_type = fields.get(3);
                     Log.d("toto7", "liste :" + colonne_type);
+*/
 
                 } catch (Exception e) {
                     popToast("Error while initializing :" + e.getMessage(), true);
