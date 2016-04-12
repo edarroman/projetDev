@@ -1,4 +1,4 @@
-## Pour envoyer les données :
+## Pour envoyer les donnÃ©es :
 
 ArrayList<Double> all = mEnregistrementDataAccessObject.getLatLng();
 
@@ -9,13 +9,14 @@ for(Double j:all){
 */
 
 // Ouverture de la Gmap (lancement de MapACtivity)
+
 Intent i = new Intent(getApplicationContext(), MapsActivity.class);
 i.putExtra("LatLng",all); // Pour zfficher les marqueurs sur la carte
 
 startActivity(i);
 
 
-## Pour récupérer les données :
+## Pour rÃ©cupÃ©rer les donnÃ©es :
 
 Intent i = getIntent();
 ArrayList<Integer> latlng = i.getIntegerArrayListExtra("LAT_LNG");
