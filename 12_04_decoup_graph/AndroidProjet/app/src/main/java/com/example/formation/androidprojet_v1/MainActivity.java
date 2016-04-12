@@ -63,18 +63,29 @@ public class MainActivity extends Activity {
     Locator mLocator = null;
     Spinner dSpinner;
 
-    Geometry lignes = null;
-    Geometry projection = null;
+    //Geometry lignes = null;
+    Geometry projection_niv0 = null;
+    Geometry projection_niv1 = null;
+    Geometry projection_niv2 = null;
     Geometry geom_niveau0 = null;
+    Geometry geom_niveau1 = null;
+    Geometry geom_niveau2 = null;
     Geometry geometries_niveau0 = null;
+    Geometry geometries_niveau1 = null;
+    Geometry geometries_niveau2 = null;
+
     GeometryEngine geomen = new GeometryEngine();
+
     GraphicsLayer mGraphicsLayer2 = new GraphicsLayer(RenderingMode.DYNAMIC);
     //SpatialReference WKID_WGS84 = SpatialReference.create(4326);
     //SpatialReference WKID_WGS84_WEB_MERCATOR = SpatialReference.create(102113);
     //SpatialReference WKID_WGS84_WEB_MERCATOR_AUXILIARY_SPHERE = SpatialReference.create(102100);
     SpatialReference WKID_RGF93 = SpatialReference.create(102110);
 
-    Geodatabase gdb = null;
+    Geometry[] array_geom_niv0 = new Geometry[127];
+    Geometry[] array_geom_niv1 = new Geometry[757];
+    Geometry[] array_geom_niv2 = new Geometry[780];
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,7 +93,6 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         File tpk = new File(extern + tpkPath);
-        Log.d("toto1", extern + tpkPath);
         Log.d("RoutingAndGeocoding", "Find tpk: " + tpk.exists());
         Log.d("RoutingAndGeocoding", "Initialized tpk: " + mTileLayer.isInitialized());
 
@@ -126,8 +136,7 @@ public class MainActivity extends Activity {
                     mRouteTask = RouteTask.createLocalRouteTask(extern + networkPath, networkName);
 
                     // open a local geodatabase
-                    //Geodatabase gdb = new Geodatabase(extern + networkPath);
-                    gdb = new Geodatabase(extern + networkPath);
+                    Geodatabase gdb = new Geodatabase(extern + networkPath);
 
                     List lst_types_niveau0 = new Vector();
                     List lst_mag_niveau0 = new Vector();
@@ -164,7 +173,46 @@ public class MainActivity extends Activity {
                     Log.d("test2_niveau2", "lst_mag_niveau2 :" + lst_mag_niveau2);
 */
                     //GeodatabaseFeatureTable tables = gdb.getGeodatabaseTables().get(11);
-                    lignes = gdb.getGeodatabaseTables().get(11).getFeature(36).getGeometry();
+                    //GeodatabaseFeatureTable lignes = gdb.getGeodatabaseTables().get(13);//.getFeature(36).getGeometry();
+                    //Log.d("geom_lig", ": " + lignes);
+                    ////////////
+                    //int nbr_features = new Long(gdb.getGeodatabaseTables().get(11).getNumberOfFeatures()).intValue();
+                    //Geometry[] array_geom = new Geometry[nbr_features];
+                    int i = array_geom_niv0.length;
+                    int l = array_geom_niv1.length;
+                    int m = array_geom_niv2.length;
+
+                    for(int j=1; j<=i; j++){
+                        if (gdb.getGeodatabaseTables().get(11).checkFeatureExists(j)) {
+                            geom_niveau0 = gdb.getGeodatabaseTables().get(11).getFeature(j).getGeometry();
+                            array_geom_niv0[j-1] = geom_niveau0;
+                        }
+                        else {
+                            array_geom_niv0[j-1] = null;
+                        }
+                    }
+
+                    for(int j=1; j<=l; j++){
+                        if (gdb.getGeodatabaseTables().get(12).checkFeatureExists(j)) {
+                            geom_niveau1 = gdb.getGeodatabaseTables().get(12).getFeature(j).getGeometry();
+                            array_geom_niv1[j-1] = geom_niveau1;
+                        }
+                        else {
+                            array_geom_niv1[j-1] = null;
+                        }
+                    }
+
+                    for(int j=1; j<=m; j++){
+                        if (gdb.getGeodatabaseTables().get(13).checkFeatureExists(j)) {
+                            geom_niveau2 = gdb.getGeodatabaseTables().get(13).getFeature(j).getGeometry();
+                            array_geom_niv2[j-1] = geom_niveau0;
+                        }
+                        else {
+                            array_geom_niv2[j-1] = null;
+                        }
+                    }
+
+                    ///////////
                     /*
                     Geometry ligne1 = gdb.getGeodatabaseTables().get(11).getFeature(36).getGeometry();
                     Geometry ligne2 = null;
@@ -289,43 +337,50 @@ public class MainActivity extends Activity {
                     mGraphicsLayer.removeGraphic(routeHandle);
 
                 //////////////////////////////
-/*
-                long nbr_features = gdb.getGeodatabaseTables().get(11).getNumberOfFeatures();
-                int nbr_features_int = new Long(nbr_features).intValue();
-                Geometry[] array_geom = new Geometry[28];
-                for(int j=1; j<=28; j++){
-                    if (gdb.getGeodatabaseTables().get(11).checkFeatureExists(j)) {
-                        geom_niveau0 = gdb.getGeodatabaseTables().get(11).getFeature(j).getGeometry();
-                        array_geom[j-1] = geom_niveau0;
-                    }
-                    else {
-                        array_geom[j-1] = null;
-                    }
-                }
-                geometries_niveau0 = geomen.union(array_geom, WKID_RGF93);
-                projection = geomen.project(geometries_niveau0, WKID_RGF93, mapRef);
-*/
+
+                geometries_niveau0 = geomen.union(array_geom_niv0, WKID_RGF93);
+                projection_niv0 = geomen.project(geometries_niveau0, WKID_RGF93, mapRef);
+
+                geometries_niveau1 = geomen.union(array_geom_niv1, WKID_RGF93);
+                projection_niv1 = geomen.project(geometries_niveau1, WKID_RGF93, mapRef);
+
+                geometries_niveau2 = geomen.union(array_geom_niv2, WKID_RGF93);
+                projection_niv2 = geomen.project(geometries_niveau2, WKID_RGF93, mapRef);
+
                 /////////////////////////////
 
                 // Add the route shape to the graphics layer
                 Geometry geom = result.getRouteGraphic().getGeometry();
-                projection = geomen.project(lignes, WKID_RGF93, mapRef);
-                Geometry geom_intersect = geomen.intersect(geom, projection, mapRef);
+                //projection = geomen.project(lignes, WKID_RGF93, mapRef);
+                Geometry geom_intersect_niv0 = geomen.intersect(geom, projection_niv0, mapRef);
+                Geometry geom_intersect_niv1 = geomen.intersect(geom, projection_niv1, mapRef);
+                Geometry geom_intersect_niv2 = geomen.intersect(geom, projection_niv2, mapRef);
+
                 //routeHandle = mGraphicsLayer.addGraphic(new Graphic(lignes, new SimpleLineSymbol(0x99990055, 5)));
                 Log.d("geomEpt",": " + geom.isEmpty());
                 //Log.d("geom",": " + geom.getType());
                 //Log.d("geom_length",": " + geom.calculateLength2D());
-                Log.d("geom_lig",": " + lignes.isValid());
-                Log.d("geom_lig_length",": " + lignes.calculateLength2D());
 
 
                 //routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom, new SimpleLineSymbol(0x99990055, 5)));
-                if (!geom_intersect.isEmpty()) {
-                    routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom_intersect, new SimpleLineSymbol(0x99990055, 5)));
-                    Log.d("geom_inter", ": " + geom_intersect.getType());
-                    Log.d("geom_inter_length",": " + geom_intersect.calculateLength2D());
+                if (!geom_intersect_niv0.isEmpty()) {
+                    routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom_intersect_niv0, new SimpleLineSymbol(0x99990055, 5)));
+                    Log.d("geom_inter", ": " + geom_intersect_niv0.getType());
+                    Log.d("geom_inter_length",": " + geom_intersect_niv0.calculateLength2D());
                 }
-                //Log.d("geom_inter_length",": " + mapRef);
+                /*
+                if (!geom_intersect_niv1.isEmpty()) {
+                    routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom_intersect_niv1, new SimpleLineSymbol(0x99990055, 5)));
+                    Log.d("geom_inter", ": " + geom_intersect_niv1.getType());
+                    Log.d("geom_inter_length",": " + geom_intersect_niv1.calculateLength2D());
+                }
+                if (!geom_intersect_niv2.isEmpty()) {
+                    routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom_intersect_niv2, new SimpleLineSymbol(0x99990055, 5)));
+                    Log.d("geom_inter", ": " + geom_intersect_niv2.getType());
+                    Log.d("geom_inter_length",": " + geom_intersect_niv2.calculateLength2D());
+                }
+                */
+
                 mMapView.getCallout().hide();
 
                 // Get the list of directions from the result
