@@ -245,24 +245,24 @@ public class MainActivity extends Activity {
                     for(int j=1; j<=m1; j++){
                         if (tab_niv2.checkFeatureExists(j)) {
                             geom_niveau2 = tab_niv2.getFeature(j).getGeometry();
-                            array_geom_niv2_1[j-1] = geom_niveau0;
+                            array_geom_niv2_1[j-1] = geom_niveau2;
                         }
                         else {
                             array_geom_niv2_1[j-1] = poubelle;
                         }
                     }
 
-                    k1 = 0;
+                    int k2 = 0;
                     for(int j=(m1+1); j<=m2; j++){
-                        if (tab_niv1.checkFeatureExists(j)) {
-                            geom_niveau1 = tab_niv1.getFeature(j).getGeometry();
-                            array_geom_niv2_2[k1] = geom_niveau1;
+                        if (tab_niv2.checkFeatureExists(j)) {
+                            geom_niveau2 = tab_niv2.getFeature(j).getGeometry();
+                            array_geom_niv2_2[k2] = geom_niveau2;
 
-                            k1 = k1+1;
+                            k2 = k2+1;
                         }
                         else {
-                            array_geom_niv1_1[i] = poubelle;
-                            k1 = k1+1;
+                            array_geom_niv2_2[i] = poubelle;
+                            k2 = k2+1;
                         }
                     }
 
@@ -284,7 +284,7 @@ public class MainActivity extends Activity {
 
                     Log.d("geometries_niveau0", "" + geometries_niveau0.calculateLength2D());
                     Log.d("geometries_niveau1", "" + geometries_niveau1_all.calculateLength2D());
-                    Log.d("geometries_niveau2", "" + geometries_niveau1_all.calculateLength2D());
+                    Log.d("geometries_niveau2", "" + geometries_niveau2_all.calculateLength2D());
 
 
                     ///////////
@@ -421,6 +421,7 @@ public class MainActivity extends Activity {
 
                 //geometries_niveau2 = geomen.union(array_geom_niv2, WKID_RGF93);
                 projection_niv2 = geomen.project(geometries_niveau2_all, WKID_RGF93, mapRef);
+                Log.d("proj2 vide", ""+projection_niv2.isEmpty());
 
                 /////////////////////////////
 
@@ -430,31 +431,34 @@ public class MainActivity extends Activity {
                 Geometry geom_intersect_niv0 = geomen.intersect(geom, projection_niv0, mapRef);
                 Geometry geom_intersect_niv1 = geomen.intersect(geom, projection_niv1, mapRef);
                 Geometry geom_intersect_niv2 = geomen.intersect(geom, projection_niv2, mapRef);
+                Log.d("geom interse2 vide", ""+geom_intersect_niv2.isEmpty());
 
                 //routeHandle = mGraphicsLayer.addGraphic(new Graphic(lignes, new SimpleLineSymbol(0x99990055, 5)));
-                Log.d("geomEpt",": " + geom.isEmpty());
+                Log.d("geomEpt","" + geom.isEmpty());
                 //Log.d("geom",": " + geom.getType());
                 //Log.d("geom_length",": " + geom.calculateLength2D());
 
 
                 //routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom, new SimpleLineSymbol(0x99990055, 5)));
+                /*
                 if (!geom_intersect_niv0.isEmpty()) {
                     routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom_intersect_niv0, new SimpleLineSymbol(0x99990055, 5)));
                     Log.d("geom_inter", ": " + geom_intersect_niv0.getType());
                     Log.d("geom_inter_length",": " + geom_intersect_niv0.calculateLength2D());
                 }
-                /*
+
                 if (!geom_intersect_niv1.isEmpty()) {
                     routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom_intersect_niv1, new SimpleLineSymbol(0x99990055, 5)));
                     Log.d("geom_inter", ": " + geom_intersect_niv1.getType());
                     Log.d("geom_inter_length",": " + geom_intersect_niv1.calculateLength2D());
                 }
+                */
                 if (!geom_intersect_niv2.isEmpty()) {
                     routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom_intersect_niv2, new SimpleLineSymbol(0x99990055, 5)));
                     Log.d("geom_inter", ": " + geom_intersect_niv2.getType());
                     Log.d("geom_inter_length",": " + geom_intersect_niv2.calculateLength2D());
                 }
-                */
+
 
                 mMapView.getCallout().hide();
 
