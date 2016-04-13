@@ -1,5 +1,6 @@
 package com.example.formation.androidprojet_v1;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import java.io.File;
@@ -19,7 +20,9 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.esri.android.map.GraphicsLayer;
@@ -48,17 +51,18 @@ import com.esri.core.tasks.na.RouteParameters;
 import com.esri.core.tasks.na.RouteResult;
 import com.esri.core.tasks.na.RouteTask;
 import com.esri.core.tasks.na.StopGraphic;
+import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
 
 /*
-final String tpkPath = "/ProjArcades/ArcGIS/arcades.tpk";
+private final String tpkPath = "/ProjArcades/ArcGIS/arcades.tpk";
 
 String locatorPath = "/ProjArcades/ArcGIS/Geocoding/MGRS.loc";
 String networkPath = "/ProjArcades/ArcGIS/Routing/base_de_donnees.geodatabase";
 String networkName = "GRAPH_Final_ND";
 */
 
-
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements OnItemSelectedListener, View.OnClickListener {
 
     /**
      * Déclaration des variables globales :
@@ -66,8 +70,9 @@ public class MainActivity extends Activity {
 
     // Define ArcGIS Elements
     private MapView mMapView;
+
     private final String extern = Environment.getExternalStorageDirectory().getPath();
-    private final String tpkPath = "/ProjArcades/ArcGIS/arcades.tpk";
+    private String tpkPath = "/ProjArcades/ArcGIS/arcades.tpk";
 
     private TiledLayer mTileLayer = new ArcGISLocalTiledLayer(extern + tpkPath);
     private GraphicsLayer mGraphicsLayer = new GraphicsLayer(RenderingMode.DYNAMIC);
@@ -77,6 +82,10 @@ public class MainActivity extends Activity {
 
     private Locator mLocator = null;
     private Spinner dSpinner;
+
+    // Variables utiles à la gestion du QR_code :
+    private Geometry geom_QR_code = null;
+    private Geometry projection = null;
 
     // Variables utiles pour la gestion des géométries;
     private Geometry projection_niv0 = null;
@@ -96,11 +105,8 @@ public class MainActivity extends Activity {
     private GeometryEngine geomen = new GeometryEngine();
 
     private GraphicsLayer mGraphicsLayer2 = new GraphicsLayer(RenderingMode.DYNAMIC);
-    //private SpatialReference WKID_WGS84 = SpatialReference.create(4326);
-    //private SpatialReference WKID_WGS84_WEB_MERCATOR = SpatialReference.create(102113);
-    //private SpatialReference WKID_WGS84_WEB_MERCATOR_AUXILIARY_SPHERE = SpatialReference.create(102100);
-    private SpatialReference WKID_RGF93 = SpatialReference.create(102110);
 
+    private SpatialReference WKID_RGF93 = SpatialReference.create(102110);
 
     // Variables utiles à la récupérations des arcs :
     private Geometry[] array_geom_niv0 = new Geometry[127];
@@ -116,6 +122,11 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // Spinner element pour changement etage
+        Spinner spinner = (Spinner) findViewById(R.id.spinner1);
+        // Spinner click listener pour changement etage
+        spinner.setOnItemSelectedListener(this);
 
         File tpk = new File(extern + tpkPath);
         Log.d("RoutingAndGeocoding", "Find tpk: " + tpk.exists());
@@ -135,6 +146,10 @@ public class MainActivity extends Activity {
         // Initialize the RouteTask and Locator with the local data
         initializeRoutingAndGeocoding();
         mMapView.setOnTouchListener(new TouchListener(MainActivity.this, mMapView));
+
+        // QR code
+        Button mybutton = (Button) findViewById(R.id.scan_button);
+        mybutton.setOnClickListener(this);
     }
 
     /**
@@ -161,36 +176,18 @@ public class MainActivity extends Activity {
                     mLocator = Locator.createLocalLocator(extern + locatorPath);
                     mRouteTask = RouteTask.createLocalRouteTask(extern + networkPath, networkName);
 
+                    ////////////////////////////////////////////////////////////////////////////////
+
                     // open a local geodatabase
                     Geodatabase gdb = new Geodatabase(extern + networkPath);
 
-                    List lst_types_niveau0 = new Vector();
-                    List lst_mag_niveau0 = new Vector();
-                    List lst_types_niveau1 = new Vector();
-                    List lst_mag_niveau1 = new Vector();
-                    List lst_types_niveau2 = new Vector();
-                    List lst_mag_niveau2 = new Vector();
+                    // On prend un point connu pour tester QR code, en utilisant un magasin existant
+                    // Ensuite on integrera directement les QR code dans la geodatabase
+                    // Il sera judicieux de l'integrer par Android pour éviter à l'utilisateur
+                    // programmeur de recréer la geodatabase
 
-                    for(int i=0; i<=2; i++){
-                        long nbr_lignes = gdb.getGeodatabaseTables().get(i).getNumberOfFeatures();
-                        for(int l=1; l<=nbr_lignes; l++){
-                            Map<String, Object> lignes = gdb.getGeodatabaseTables().get(i).getFeature(l).getAttributes();
-                            Object type = lignes.get("TYPE");
-                            Object nom_mag = lignes.get("NOM");
-                            if (i == 0) {
-                                lst_types_niveau0.add(type);
-                                lst_mag_niveau0.add(nom_mag);
-                            }
-                            else if (i == 1) {
-                                lst_mag_niveau1.add(nom_mag);
-                                lst_types_niveau1.add(type);
-                            }
-                            else if (i == 2) {
-                                lst_mag_niveau2.add(nom_mag);
-                                lst_types_niveau2.add(type);
-                            }
-                        }
-                    }
+                    // Magasin test : La grande recre
+                    geom_QR_code = gdb.getGeodatabaseTables().get(0).getFeature(1).getGeometry();
 
                     ////////////////////////////////////////////////////////////////////////////////
 
@@ -307,6 +304,8 @@ public class MainActivity extends Activity {
             mMapView.getCallout().hide();
         }
 
+        ////////////////////////////////////////////////////////////////////////////////////////////
+
         @Override
         public boolean onSingleTap(MotionEvent point) {
 
@@ -336,6 +335,8 @@ public class MainActivity extends Activity {
 
             return true;
         }
+
+        ////////////////////////////////////////////////////////////////////////////////////////////
 
         @Override
         public boolean onDoubleTap(MotionEvent point) {
@@ -418,10 +419,10 @@ public class MainActivity extends Activity {
                     Log.d("geom_inter_length",": " + geom_intersect_niv2.calculateLength2D());
                 }
 
-                mMapView.getCallout().hide();
+                ////////////////////////////////////////////////////////////////////////////////////
 
-                // Get the list of directions from the result
-                List<RouteDirection> directions = result.getRoutingDirections();
+                //QR code
+                projection = geomen.project(geom_QR_code, WKID_RGF93, mapRef);
 
 
             } catch (Exception e) {
@@ -431,10 +432,100 @@ public class MainActivity extends Activity {
             return true;
         }
 
-        public TouchListener(Context context, MapView view) {
-            super(context, view);
+        public TouchListener(Context context, MapView view) {super(context, view);}
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        // On selecting a spinner item
+        String etageSelec = parent.getItemAtPosition(position).toString();
+
+        // Showing selected spinner item
+        Toast.makeText(parent.getContext(), "Selected: " + etageSelec, Toast.LENGTH_LONG).show();
+
+        // On recupere les noms des etages qui sont stockés dans ressources.strings.values
+        String[] nom_etage = getResources().getStringArray(R.array.etage_array);
+
+        // test suivant la selection de l'utilisateur
+
+        mMapView.removeLayer(mTileLayer);
+
+        // TODO Bool global pour affichage iti par niveau
+
+        if(etageSelec.equals( nom_etage[0])) {tpkPath = "/ProjArcades/ArcGIS/niveau_0_v2.tpk";}
+        if(etageSelec.equals( nom_etage[1])) {tpkPath = "/ProjArcades/ArcGIS/niveau_1.tpk";}
+        if(etageSelec.equals( nom_etage[2])) {tpkPath = "/ProjArcades/ArcGIS/niveau_2.tpk";}
+        if(etageSelec.equals( nom_etage[3])) {tpkPath = "/ProjArcades/ArcGIS/arcades.tpk";}
+
+        // Create the local tpk
+        mTileLayer = new ArcGISLocalTiledLayer(extern + tpkPath);
+
+        // On ajoute sur la carte la couche selectionnée
+        mMapView.addLayer(mTileLayer);
+        mMapView.addLayer(mGraphicsLayer);
+    }
+    public void onNothingSelected(AdapterView<?> arg0) {
+        // TODO : Auto-generated method stub
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Gestion des QR codes :
+     */
+
+    @Override
+    public void onClick(View v) {
+        if(v.getId() == R.id.scan_button){
+            // On lance le scanner au clic sur notre bouton
+            new IntentIntegrator(this).initiateScan();
         }
     }
+
+    public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+
+        // Nous utilisons la classe IntentIntegrator et sa fonction parseActivityResult pour parser le résultat du scan
+        IntentResult scanningResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, intent);
+        if (scanningResult != null) {
+
+            // Nous récupérons le contenu du code barre
+            String scanContent = scanningResult.getContents();
+
+            // Nous récupérons le format du code barre
+            String scanFormat = scanningResult.getFormatName();
+
+            TextView scan_format = (TextView) findViewById(R.id.scan_format);
+            TextView scan_content = (TextView) findViewById(R.id.scan_content);
+
+            // Nous affichons le résultat dans nos TextView
+            scan_format.setText("FORMAT: " + scanFormat);
+            scan_content.setText("CONTENT: " + scanContent);
+            Log.d("toto", scanContent);
+
+            // Test sur le different QR code scanné
+            // On utilise ces tests pour définir le point de départ ou des points intermédiaires par exemple
+            if(scanContent.equals( "QR code 01" ) )
+            {
+                Log.d("QR_code","QR code 01");
+                // On marque la geometrie du QR code sur la carte
+                // Rappel,on test avec le magasin "La grande recre"
+                mGraphicsLayer.addGraphic(new Graphic(projection, new SimpleMarkerSymbol(Color.RED, 10, STYLE.CROSS ) ));
+                mMapView.getCallout().hide();
+            }
+            if(scanContent.equals( "QR code 02" ) ) {Log.d("QR_code","QR code 02");}
+            if(scanContent.equals( "QR code 03" ) ) {Log.d("QR_code","QR code 03");}
+        }
+        else{
+            Toast toast = Toast.makeText(getApplicationContext(),
+                    "Aucune donnée reçu!", Toast.LENGTH_SHORT);
+            toast.show();
+        }
+
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
 
     private void popToast(final String message, final boolean show) {
         // Simple helper method for showing toast on the main thread
@@ -448,6 +539,4 @@ public class MainActivity extends Activity {
             }
         });
     }
-
-
 }
