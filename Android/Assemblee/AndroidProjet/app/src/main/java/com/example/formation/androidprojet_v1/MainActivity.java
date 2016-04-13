@@ -317,7 +317,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
         // On recupere les noms des etages qui sont stockés dans ressources.strings.values
         String[] nom_etage = getResources().getStringArray(R.array.etage_array);
 
-        // test suivant la selection de l'utilisateur
+        // Test suivant la selection de l'utilisateur:
 
         mMapView.removeLayer(mTileLayer);
 
@@ -357,9 +357,8 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
 
         ////////////////////////////////////////////////////////////////////////////////////////////
 
-        // Gestion affichage au momment du calcul d'itinéraire :
-
-        //afficherIti(etg0Selected, etg1Selected, etg2Selected);
+        // Gestion affichage au moment du changement d'étage :
+        afficherIti();
 
     }
     public void onNothingSelected(AdapterView<?> arg0) {
@@ -426,7 +425,10 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
      */
 
     class TouchListener extends MapOnTouchListener {
-
+        /**
+         * Evenement sur une longue pression du doigt supprsesions des stops et de l'itinéraire
+         * @param point
+         */
         @Override
         public void onLongPress(MotionEvent point) {
             // Our long press will clear the screen
@@ -437,6 +439,11 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
 
         ////////////////////////////////////////////////////////////////////////////////////////////
 
+        /**
+         * Evenement zvec une tape on ajoute un point (= un stop)
+         * @param point
+         * @return
+         */
         @Override
         public boolean onSingleTap(MotionEvent point) {
 
@@ -469,6 +476,11 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
 
         ////////////////////////////////////////////////////////////////////////////////////////////
 
+        /**
+         * Evenement au double tape : calcule de l'itinéraire et affichage
+         * @param point
+         * @return
+         */
         @Override
         public boolean onDoubleTap(MotionEvent point) {
 
@@ -499,10 +511,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
                 // result returned on the output.
                 Route result = results.getRoutes().get(0);
 
-                // Remove any previous route Graphics
-                if (routeHandle != -1)
-                    mGraphicsLayer.removeGraphic(routeHandle);
-
                 ////////////////////////////////////////////////////////////////////////////////////
 
                 // On projete les arcs en RGF93 :
@@ -529,14 +537,16 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
 
                 ////////////////////////////////////////////////////////////////////////////////////
 
-                //Gestion affichage au momment du calcul d'itinéraire :
+                //Gestion affichage au moment du calcul d'itinéraire :
 
-                afficherIti(etg0Selected, etg1Selected, etg2Selected);
+                afficherIti();
 
                 ////////////////////////////////////////////////////////////////////////////////////
 
                 //QR code
                 projection = geomen.project(geom_QR_code, WKID_RGF93, mapRef);
+
+                mMapView.getCallout().hide();
 
             } catch (Exception e) {
                 popToast("Solve Failed: " + e.getMessage(), true);
@@ -547,30 +557,49 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
 
         public TouchListener(Context context, MapView view) {super(context, view);}
     }
+    ////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void afficherIti(boolean etg0, boolean etg1, boolean etg2){
+    /**
+     * Fonction pour afficher l'itinéraire en fonction de l'étage sélectionner
+     */
+    public void afficherIti(){
         // On ne visualise que l'itinéraire au niveau selectionné :
 
-        if(!geom.isEmpty() && etg0 && etg1 && etg2){
-            routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom, new SimpleLineSymbol(0x99990055, 5)));
-            Log.d("geom", ": " + geom.getType());
-            Log.d("geom_inter_length", ": " + geom.calculateLength2D());
-        }
-        if (!geom_intersect_niv0.isEmpty() && etg0) {
-            routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom_intersect_niv0, new SimpleLineSymbol(0x99990055, 5)));
-            Log.d("geom0_inter", ": " + geom_intersect_niv0.getType());
-            Log.d("geom0_inter_length",": " + geom_intersect_niv0.calculateLength2D());
+        // Remove any previous route Graphics
+        if (routeHandle != -1) {
+            mGraphicsLayer.removeGraphic(routeHandle);
         }
 
-        if (!geom_intersect_niv1.isEmpty() && etg1) {
-            routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom_intersect_niv1, new SimpleLineSymbol(0x99990055, 5)));
-            Log.d("geom1_inter", ": " + geom_intersect_niv1.getType());
-            Log.d("geom1_inter_length",": " + geom_intersect_niv1.calculateLength2D());
+        if(geom != null) {
+            if (geom.isEmpty() && etg0Selected && etg1Selected && etg2Selected) {
+                routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom, new SimpleLineSymbol(0x99990055, 5)));
+                Log.d("geom", ": " + geom.getType());
+                Log.d("geom_inter_length", ": " + geom.calculateLength2D());
+            }
         }
-        if (!geom_intersect_niv2.isEmpty() && etg2) {
-            routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom_intersect_niv2, new SimpleLineSymbol(0x99990055, 5)));
-            Log.d("geom2_inter", ": " + geom_intersect_niv2.getType());
-            Log.d("geom2_inter_length", ": " + geom_intersect_niv2.calculateLength2D());
+
+        if(geom_intersect_niv0 != null) {
+            if (!geom_intersect_niv0.isEmpty() && etg0Selected) {
+                routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom_intersect_niv0, new SimpleLineSymbol(0x99990055, 5)));
+                Log.d("geom0_inter", ": " + geom_intersect_niv0.getType());
+                Log.d("geom0_inter_length", ": " + geom_intersect_niv0.calculateLength2D());
+            }
+        }
+
+        if(geom_intersect_niv1 != null) {
+            if (!geom_intersect_niv1.isEmpty() && etg1Selected) {
+                routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom_intersect_niv1, new SimpleLineSymbol(0x99990055, 5)));
+                Log.d("geom1_inter", ": " + geom_intersect_niv1.getType());
+                Log.d("geom1_inter_length", ": " + geom_intersect_niv1.calculateLength2D());
+            }
+        }
+
+        if(geom_intersect_niv2 != null) {
+            if (!geom_intersect_niv2.isEmpty() && etg2Selected) {
+                routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom_intersect_niv2, new SimpleLineSymbol(0x99990055, 5)));
+                Log.d("geom2_inter", ": " + geom_intersect_niv2.getType());
+                Log.d("geom2_inter_length", ": " + geom_intersect_niv2.calculateLength2D());
+            }
         }
     }
 
