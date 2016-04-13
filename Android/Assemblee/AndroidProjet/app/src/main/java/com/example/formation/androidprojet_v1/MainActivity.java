@@ -74,7 +74,8 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
     private MapView mMapView;
 
     private final String extern = Environment.getExternalStorageDirectory().getPath();
-    private String tpkPath = "/ProjArcades/ArcGIS/arcades.tpk";
+    private String chTpk = "/ProjArcades/ArcGIS/"; // TODO chemin qui change en fonction SD card ou non : trouver automatiquement
+    private String tpkPath = chTpk +"arcades.tpk";
 
     private TiledLayer mTileLayer = new ArcGISLocalTiledLayer(extern + tpkPath);
     private GraphicsLayer mGraphicsLayer = new GraphicsLayer(RenderingMode.DYNAMIC);
@@ -94,31 +95,31 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
     private Geometry geom_QR_code = null;
     private Geometry projection = null;
 
-    // Variables utiles pour la gestion des géométries;
     private Geometry projection_niv0 = null;
     private Geometry projection_niv1 = null;
     private Geometry projection_niv2 = null;
+    // Geometrie par niveau
     private Geometry geom_niveau0 = null;
     private Geometry geom_niveau1 = null;
     private Geometry geom_niveau2 = null;
+    // Geometrie union :
     private Geometry geometries_niveau0 = null;
     private Geometry geometries_niveau1_1 = null;
     private Geometry geometries_niveau1_2 = null;
+    private Geometry geometries_niveau1_all = null;
     private Geometry geometries_niveau2_1 = null;
     private Geometry geometries_niveau2_2 = null;
-    private Geometry geometries_niveau1_all = null;
     private Geometry geometries_niveau2_all = null;
-
+    // Géomtrie intersections :
     private Geometry geom = null;
     private Geometry geom_intersect_niv0 = null;
     private Geometry geom_intersect_niv1 = null;
     private Geometry geom_intersect_niv2 = null;
 
-
+    // Définiton géométrie engine :
     private GeometryEngine geomen = new GeometryEngine();
 
-    private GraphicsLayer mGraphicsLayer2 = new GraphicsLayer(RenderingMode.DYNAMIC);
-
+    // Référence spatiale :
     private SpatialReference WKID_RGF93 = SpatialReference.create(102110);
 
     // Variables utiles à la récupérations des arcs :
@@ -207,6 +208,8 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
 
                     ////////////////////////////////////////////////////////////////////////////////
 
+                    // TODO : un arc par niveau ?
+
                     GeodatabaseFeatureTable tab_niv0 = gdb.getGeodatabaseTables().get(11);
                     GeodatabaseFeatureTable tab_niv1 = gdb.getGeodatabaseTables().get(12);
                     GeodatabaseFeatureTable tab_niv2 = gdb.getGeodatabaseTables().get(13);
@@ -242,7 +245,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
 
                     // Etage 1_2 :
                     int k1 = 0;
-                    for(int j=(l1+1); j<=l2; j++){
+                    for(int j=l1+1; j<=l1+l2; j++){
                         if (tab_niv1.checkFeatureExists(j)) {
                             geom_niveau1 = tab_niv1.getFeature(j).getGeometry();
                             array_geom_niv1_2[k1] = geom_niveau1;
@@ -264,7 +267,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
 
                     // Etage 2_2 :
                     int k2 = 0;
-                    for(int j=(m1+1); j<=m2; j++){
+                    for(int j=m1+1; j<=m1+m2; j++){
                         if (tab_niv2.checkFeatureExists(j)) {
                             geom_niveau2 = tab_niv2.getFeature(j).getGeometry();
                             array_geom_niv2_2[k2] = geom_niveau2;
@@ -329,25 +332,25 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
         mMapView.removeLayer(mTileLayer);
 
         if(etageSelec.equals( nom_etage[0])) {
-            tpkPath = "/ProjArcades/ArcGIS/niveau_0_v2.tpk";
+            tpkPath = chTpk+"niveau_0.tpk";
             etg0Selected = true;
             etg1Selected = false;
             etg2Selected = false;
         }
         if(etageSelec.equals( nom_etage[1])) {
-            tpkPath = "/ProjArcades/ArcGIS/niveau_1.tpk";
+            tpkPath = chTpk+"niveau_1.tpk";
             etg0Selected = false;
             etg1Selected = true;
             etg2Selected = false;
         }
         if(etageSelec.equals( nom_etage[2])) {
-            tpkPath = "/ProjArcades/ArcGIS/niveau_2.tpk";
+            tpkPath = chTpk+"niveau_2.tpk";
             etg0Selected = false;
             etg1Selected = false;
             etg2Selected = true;
         }
         if(etageSelec.equals( nom_etage[3])) {
-            tpkPath = "/ProjArcades/ArcGIS/arcades.tpk";
+            tpkPath = chTpk+"arcades.tpk";
             etg0Selected = true;
             etg1Selected = true;
             etg2Selected = true;
@@ -582,36 +585,34 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
         SimpleLineSymbol ligSym = new SimpleLineSymbol(0x99990055, 5);
 
         // Remove any previous route Graphics
-        if (routeHandle != -1) {
-            mGraphicsLayer.removeGraphic(routeHandle);
-        }
+        mGraphicsLayer.removeGraphic(routeHandle);
 
-        if(geom_intersect_niv0 != null) {
-            if (!geom_intersect_niv0.isEmpty() && etg0Selected) {
+
+        if(geom_intersect_niv0 != null && etg0Selected) {
+            if (!geom_intersect_niv0.isEmpty()) {
                 routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom_intersect_niv0, ligSym));
-                Log.d("geom0_inter", ": " + geom_intersect_niv0.getType());
                 Log.d("geom0_inter_length", ": " + geom_intersect_niv0.calculateLength2D());
             }
         }
-        if(geom_intersect_niv1 != null) {
-            if (!geom_intersect_niv1.isEmpty() && etg1Selected) {
+
+        if(geom_intersect_niv1 != null && etg1Selected) {
+            if (!geom_intersect_niv1.isEmpty()) {
                 routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom_intersect_niv1, ligSym));
-                Log.d("geom1_inter", ": " + geom_intersect_niv1.getType());
                 Log.d("geom1_inter_length", ": " + geom_intersect_niv1.calculateLength2D());
             }
         }
-        if(geom_intersect_niv2 != null) {
-            if (!geom_intersect_niv2.isEmpty() && etg2Selected) {
+
+        if(geom_intersect_niv2 != null  && etg2Selected) {
+            if (!geom_intersect_niv2.isEmpty()) {
                 routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom_intersect_niv2, ligSym));
-                Log.d("geom2_inter", ": " + geom_intersect_niv2.getType());
                 Log.d("geom2_inter_length", ": " + geom_intersect_niv2.calculateLength2D());
             }
         }
-        if(geom!= null) {
-            if (!geom.isEmpty() && etg0Selected && etg1Selected && etg2Selected) {
+
+        if(geom!= null && etg0Selected && etg1Selected && etg2Selected) {
+            if (!geom.isEmpty()) {
                 routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom, ligSym));
-                Log.d("geom0_inter", ": " + geom.getType());
-                Log.d("geom0_inter_length", ": " + geom.calculateLength2D());
+                Log.d("geom_inter_length", ": " + geom.calculateLength2D());
             }
         }
     }
