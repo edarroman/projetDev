@@ -14,8 +14,4 @@
         android:layout_width="fill_parent"
         android:layout_height="fill_parent">
     </com.esri.android.map.MapView>
-    <Spinner
-        android:id="@+id/directionsSpinner"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content" />
 </RelativeLayout>
