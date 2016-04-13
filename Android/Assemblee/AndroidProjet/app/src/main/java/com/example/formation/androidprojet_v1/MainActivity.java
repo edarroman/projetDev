@@ -75,9 +75,18 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
 
     private final String extern = Environment.getExternalStorageDirectory().getPath();
     private String chTpk = "/ProjArcades/ArcGIS/"; // TODO chemin qui change en fonction SD card ou non : trouver automatiquement
+
+    // Variable pour image de fond :
     private String tpkPath = chTpk +"arcades.tpk";
+    private String tpkPath0 = chTpk +"niveau_0.tpk";
+    private String tpkPath1 = chTpk +"niveau_1.tpk";
+    private String tpkPath2 = chTpk +"niveau_2.tpk";
 
     private TiledLayer mTileLayer = new ArcGISLocalTiledLayer(extern + tpkPath);
+    private TiledLayer mTileLayer0 = new ArcGISLocalTiledLayer(extern + tpkPath0);
+    private TiledLayer mTileLayer1 = new ArcGISLocalTiledLayer(extern + tpkPath1);
+    private TiledLayer mTileLayer2 = new ArcGISLocalTiledLayer(extern + tpkPath2);
+
     private GraphicsLayer mGraphicsLayer = new GraphicsLayer(RenderingMode.DYNAMIC);
 
     private RouteTask mRouteTask = null;
@@ -157,7 +166,18 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
         mMapView = (MapView) findViewById(R.id.map);
 
         // Set the tiled map service layer and add a graphics layer
+        mMapView.addLayer(mTileLayer0);
+        mTileLayer0.setVisible(false);
+
+        mMapView.addLayer(mTileLayer1);
+        mTileLayer1.setVisible(false);
+
+        mMapView.addLayer(mTileLayer2);
+        mTileLayer2.setVisible(false);
+
         mMapView.addLayer(mTileLayer);
+        mTileLayer.setVisible(false);
+
         mMapView.addLayer(mGraphicsLayer);
 
         // Initialize the RouteTask and Locator with the local data
@@ -208,7 +228,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
 
                     ////////////////////////////////////////////////////////////////////////////////
 
-                    // TODO : un arc par niveau ?
+                    // TODO : un arc par niveau ? Gain temps et efficacité ?
 
                     GeodatabaseFeatureTable tab_niv0 = gdb.getGeodatabaseTables().get(11);
                     GeodatabaseFeatureTable tab_niv1 = gdb.getGeodatabaseTables().get(12);
@@ -328,48 +348,55 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
         // On recupere les noms des etages qui sont stockés dans ressources.strings.values
         String[] nom_etage = getResources().getStringArray(R.array.etage_array);
 
+        // On supprime l'ancien layer :
+        // mMapView.removeLayer(mTileLayer);
+
         // Test suivant la selection de l'utilisateur:
-        mMapView.removeLayer(mTileLayer);
+        if(etageSelec.equals(nom_etage[0])) {
+            mTileLayer.setVisible(false);
+            mTileLayer0.setVisible(true);
+            mTileLayer1.setVisible(false);
+            mTileLayer2.setVisible(false);
 
-        if(etageSelec.equals( nom_etage[0])) {
-            tpkPath = chTpk+"niveau_0.tpk";
             etg0Selected = true;
             etg1Selected = false;
             etg2Selected = false;
         }
-        if(etageSelec.equals( nom_etage[1])) {
-            tpkPath = chTpk+"niveau_1.tpk";
+        if(etageSelec.equals(nom_etage[1])) {
+            mTileLayer.setVisible(false);
+            mTileLayer0.setVisible(false);
+            mTileLayer1.setVisible(true);
+            mTileLayer2.setVisible(false);
+
             etg0Selected = false;
             etg1Selected = true;
             etg2Selected = false;
         }
-        if(etageSelec.equals( nom_etage[2])) {
-            tpkPath = chTpk+"niveau_2.tpk";
+        if(etageSelec.equals(nom_etage[2])) {
+            mTileLayer.setVisible(false);
+            mTileLayer0.setVisible(false);
+            mTileLayer1.setVisible(false);
+            mTileLayer2.setVisible(true);
+
             etg0Selected = false;
             etg1Selected = false;
             etg2Selected = true;
         }
-        if(etageSelec.equals( nom_etage[3])) {
-            tpkPath = chTpk+"arcades.tpk";
+        if(etageSelec.equals(nom_etage[3])) {
+            mTileLayer.setVisible(true);
+            mTileLayer0.setVisible(false);
+            mTileLayer1.setVisible(false);
+            mTileLayer2.setVisible(false);
+
             etg0Selected = true;
             etg1Selected = true;
             etg2Selected = true;
         }
-
-        ////////////////////////////////////////////////////////////////////////////////////////////
-
-        // Create the local tpk
-        mTileLayer = new ArcGISLocalTiledLayer(extern + tpkPath);
-
-        // On ajoute sur la carte la couche selectionnée
-        mMapView.addLayer(mTileLayer);
-        mMapView.addLayer(mGraphicsLayer);
 
         ////////////////////////////////////////////////////////////////////////////////////////////
 
         // Gestion affichage au moment du changement d'étage :
         afficherIti();
-
     }
     public void onNothingSelected(AdapterView<?> arg0) {
         // TODO : Auto-generated method stub
@@ -581,12 +608,10 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
      */
     public void afficherIti(){
         // On ne visualise que l'itinéraire au niveau selectionné :
-
         SimpleLineSymbol ligSym = new SimpleLineSymbol(0x99990055, 5);
 
         // Remove any previous route Graphics
         mGraphicsLayer.removeGraphic(routeHandle);
-
 
         if(geom_intersect_niv0 != null && etg0Selected) {
             if (!geom_intersect_niv0.isEmpty()) {
