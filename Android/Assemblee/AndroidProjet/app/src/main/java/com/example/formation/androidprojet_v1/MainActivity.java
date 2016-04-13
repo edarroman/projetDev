@@ -565,6 +565,8 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
     public void afficherIti(){
         // On ne visualise que l'itinéraire au niveau selectionné :
 
+        SimpleLineSymbol ligSym = new SimpleLineSymbol(0x99990055, 5);
+
         // Remove any previous route Graphics
         if (routeHandle != -1) {
             mGraphicsLayer.removeGraphic(routeHandle);
@@ -572,7 +574,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
 
         if(geom != null) {
             if (geom.isEmpty() && etg0Selected && etg1Selected && etg2Selected) {
-                routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom, new SimpleLineSymbol(0x99990055, 5)));
+                routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom, ligSym));
                 Log.d("geom", ": " + geom.getType());
                 Log.d("geom_inter_length", ": " + geom.calculateLength2D());
             }
@@ -580,7 +582,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
 
         if(geom_intersect_niv0 != null) {
             if (!geom_intersect_niv0.isEmpty() && etg0Selected) {
-                routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom_intersect_niv0, new SimpleLineSymbol(0x99990055, 5)));
+                routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom_intersect_niv0, ligSym));
                 Log.d("geom0_inter", ": " + geom_intersect_niv0.getType());
                 Log.d("geom0_inter_length", ": " + geom_intersect_niv0.calculateLength2D());
             }
@@ -588,7 +590,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
 
         if(geom_intersect_niv1 != null) {
             if (!geom_intersect_niv1.isEmpty() && etg1Selected) {
-                routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom_intersect_niv1, new SimpleLineSymbol(0x99990055, 5)));
+                routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom_intersect_niv1, ligSym));
                 Log.d("geom1_inter", ": " + geom_intersect_niv1.getType());
                 Log.d("geom1_inter_length", ": " + geom_intersect_niv1.calculateLength2D());
             }
@@ -596,7 +598,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
 
         if(geom_intersect_niv2 != null) {
             if (!geom_intersect_niv2.isEmpty() && etg2Selected) {
-                routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom_intersect_niv2, new SimpleLineSymbol(0x99990055, 5)));
+                routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom_intersect_niv2, ligSym));
                 Log.d("geom2_inter", ": " + geom_intersect_niv2.getType());
                 Log.d("geom2_inter_length", ": " + geom_intersect_niv2.calculateLength2D());
             }
