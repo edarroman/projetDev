@@ -83,6 +83,11 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
     private Locator mLocator = null;
     private Spinner dSpinner;
 
+    // Variables utiles pour la gestion du multi-étage :
+    private boolean etg0Selected = false;
+    private boolean etg1Selected = false;
+    private boolean etg2Selected = false;
+
     // Variables utiles à la gestion du QR_code :
     private Geometry geom_QR_code = null;
     private Geometry projection = null;
@@ -102,6 +107,12 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
     private Geometry geometries_niveau1_all = null;
     private Geometry geometries_niveau2_all = null;
 
+    private Geometry geom = null;
+    private Geometry geom_intersect_niv0 = null;
+    private Geometry geom_intersect_niv1 = null;
+    private Geometry geom_intersect_niv2 = null;
+
+
     private GeometryEngine geomen = new GeometryEngine();
 
     private GraphicsLayer mGraphicsLayer2 = new GraphicsLayer(RenderingMode.DYNAMIC);
@@ -116,6 +127,9 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
     private Geometry[] array_geom_niv2_2 = new Geometry[400];
     private Geometry[] array_geom_niv1_all = new Geometry[2];
     private Geometry[] array_geom_niv2_all = new Geometry[2];
+
+    // Gestion itinéraire :
+    private int routeHandle = -1;
 
 
     @Override
@@ -292,9 +306,126 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
      * Définition des évenements :
      */
 
-    class TouchListener extends MapOnTouchListener {
+    @Override
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        // On selecting a spinner item
+        String etageSelec = parent.getItemAtPosition(position).toString();
 
-        private int routeHandle = -1;
+        // Showing selected spinner item
+        Toast.makeText(parent.getContext(), "Selected: " + etageSelec, Toast.LENGTH_LONG).show();
+
+        // On recupere les noms des etages qui sont stockés dans ressources.strings.values
+        String[] nom_etage = getResources().getStringArray(R.array.etage_array);
+
+        // test suivant la selection de l'utilisateur
+
+        mMapView.removeLayer(mTileLayer);
+
+        if(etageSelec.equals( nom_etage[0])) {
+            tpkPath = "/ProjArcades/ArcGIS/niveau_0_v2.tpk";
+            etg0Selected = true;
+            etg1Selected = false;
+            etg2Selected = false;
+        }
+        if(etageSelec.equals( nom_etage[1])) {
+            tpkPath = "/ProjArcades/ArcGIS/niveau_1.tpk";
+            etg0Selected = false;
+            etg1Selected = true;
+            etg2Selected = false;
+        }
+        if(etageSelec.equals( nom_etage[2])) {
+            tpkPath = "/ProjArcades/ArcGIS/niveau_2.tpk";
+            etg0Selected = false;
+            etg1Selected = false;
+            etg2Selected = true;
+        }
+        if(etageSelec.equals( nom_etage[3])) {
+            tpkPath = "/ProjArcades/ArcGIS/arcades.tpk";
+            etg0Selected = true;
+            etg1Selected = true;
+            etg2Selected = true;
+        }
+
+        ////////////////////////////////////////////////////////////////////////////////////////////
+
+        // Create the local tpk
+        mTileLayer = new ArcGISLocalTiledLayer(extern + tpkPath);
+
+        // On ajoute sur la carte la couche selectionnée
+        mMapView.addLayer(mTileLayer);
+        mMapView.addLayer(mGraphicsLayer);
+
+        ////////////////////////////////////////////////////////////////////////////////////////////
+
+        // Gestion affichage au momment du calcul d'itinéraire :
+
+        //afficherIti(etg0Selected, etg1Selected, etg2Selected);
+
+    }
+    public void onNothingSelected(AdapterView<?> arg0) {
+        // TODO : Auto-generated method stub
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Gestion des QR codes :
+     */
+
+    @Override
+    public void onClick(View v) {
+        if(v.getId() == R.id.scan_button){
+            // On lance le scanner au clic sur notre bouton
+            new IntentIntegrator(this).initiateScan();
+        }
+    }
+
+    public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        // Nous utilisons la classe IntentIntegrator et sa fonction parseActivityResult pour parser le résultat du scan
+        IntentResult scanningResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, intent);
+        if (scanningResult != null) {
+
+            // Nous récupérons le contenu du code barre
+            String scanContent = scanningResult.getContents();
+
+            // Nous récupérons le format du code barre
+            String scanFormat = scanningResult.getFormatName();
+
+            TextView scan_format = (TextView) findViewById(R.id.scan_format);
+            TextView scan_content = (TextView) findViewById(R.id.scan_content);
+
+            // Nous affichons le résultat dans nos TextView
+            scan_format.setText("FORMAT: " + scanFormat);
+            scan_content.setText("CONTENT: " + scanContent);
+            Log.d("toto", scanContent);
+
+            // Test sur le different QR code scanné
+            // On utilise ces tests pour définir le point de départ ou des points intermédiaires par exemple
+            if(scanContent.equals( "QR code 01" ) )
+            {
+                Log.d("QR_code","QR code 01");
+                // On marque la geometrie du QR code sur la carte
+                // Rappel,on test avec le magasin "La grande recre"
+                mGraphicsLayer.addGraphic(new Graphic(projection, new SimpleMarkerSymbol(Color.RED, 10, STYLE.CROSS ) ));
+                mMapView.getCallout().hide();
+            }
+            if(scanContent.equals( "QR code 02" ) ) {Log.d("QR_code","QR code 02");}
+            if(scanContent.equals( "QR code 03" ) ) {Log.d("QR_code","QR code 03");}
+        }
+        else{
+            Toast toast = Toast.makeText(getApplicationContext(),
+                    "Aucune donnée reçu!", Toast.LENGTH_SHORT);
+            toast.show();
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Gestion itinéraire :
+     */
+
+    class TouchListener extends MapOnTouchListener {
 
         @Override
         public void onLongPress(MotionEvent point) {
@@ -390,40 +521,22 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
                 // On intersecte l'itinéraire avec les arcs :
 
                 // Add the route shape to the graphics layer
-                Geometry geom = result.getRouteGraphic().getGeometry();
+                geom = result.getRouteGraphic().getGeometry();
 
-                Geometry geom_intersect_niv0 = geomen.intersect(geom, projection_niv0, mapRef);
-                Geometry geom_intersect_niv1 = geomen.intersect(geom, projection_niv1, mapRef);
-                Geometry geom_intersect_niv2 = geomen.intersect(geom, projection_niv2, mapRef);
+                geom_intersect_niv0 = geomen.intersect(geom, projection_niv0, mapRef);
+                geom_intersect_niv1 = geomen.intersect(geom, projection_niv1, mapRef);
+                geom_intersect_niv2 = geomen.intersect(geom, projection_niv2, mapRef);
 
                 ////////////////////////////////////////////////////////////////////////////////////
 
-                // On ne visulalise que l'itinéraire au niveau selectionné :
+                //Gestion affichage au momment du calcul d'itinéraire :
 
-                /*
-                if (!geom_intersect_niv0.isEmpty()) {
-                    routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom_intersect_niv0, new SimpleLineSymbol(0x99990055, 5)));
-                    Log.d("geom_inter", ": " + geom_intersect_niv0.getType());
-                    Log.d("geom_inter_length",": " + geom_intersect_niv0.calculateLength2D());
-                }
-
-                if (!geom_intersect_niv1.isEmpty()) {
-                    routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom_intersect_niv1, new SimpleLineSymbol(0x99990055, 5)));
-                    Log.d("geom_inter", ": " + geom_intersect_niv1.getType());
-                    Log.d("geom_inter_length",": " + geom_intersect_niv1.calculateLength2D());
-                }
-                */
-                if (!geom_intersect_niv2.isEmpty()) {
-                    routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom_intersect_niv2, new SimpleLineSymbol(0x99990055, 5)));
-                    Log.d("geom_inter", ": " + geom_intersect_niv2.getType());
-                    Log.d("geom_inter_length",": " + geom_intersect_niv2.calculateLength2D());
-                }
+                afficherIti(etg0Selected, etg1Selected, etg2Selected);
 
                 ////////////////////////////////////////////////////////////////////////////////////
 
                 //QR code
                 projection = geomen.project(geom_QR_code, WKID_RGF93, mapRef);
-
 
             } catch (Exception e) {
                 popToast("Solve Failed: " + e.getMessage(), true);
@@ -435,94 +548,30 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
         public TouchListener(Context context, MapView view) {super(context, view);}
     }
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////
+    public void afficherIti(boolean etg0, boolean etg1, boolean etg2){
+        // On ne visualise que l'itinéraire au niveau selectionné :
 
-    @Override
-    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        // On selecting a spinner item
-        String etageSelec = parent.getItemAtPosition(position).toString();
-
-        // Showing selected spinner item
-        Toast.makeText(parent.getContext(), "Selected: " + etageSelec, Toast.LENGTH_LONG).show();
-
-        // On recupere les noms des etages qui sont stockés dans ressources.strings.values
-        String[] nom_etage = getResources().getStringArray(R.array.etage_array);
-
-        // test suivant la selection de l'utilisateur
-
-        mMapView.removeLayer(mTileLayer);
-
-        // TODO Bool global pour affichage iti par niveau
-
-        if(etageSelec.equals( nom_etage[0])) {tpkPath = "/ProjArcades/ArcGIS/niveau_0_v2.tpk";}
-        if(etageSelec.equals( nom_etage[1])) {tpkPath = "/ProjArcades/ArcGIS/niveau_1.tpk";}
-        if(etageSelec.equals( nom_etage[2])) {tpkPath = "/ProjArcades/ArcGIS/niveau_2.tpk";}
-        if(etageSelec.equals( nom_etage[3])) {tpkPath = "/ProjArcades/ArcGIS/arcades.tpk";}
-
-        // Create the local tpk
-        mTileLayer = new ArcGISLocalTiledLayer(extern + tpkPath);
-
-        // On ajoute sur la carte la couche selectionnée
-        mMapView.addLayer(mTileLayer);
-        mMapView.addLayer(mGraphicsLayer);
-    }
-    public void onNothingSelected(AdapterView<?> arg0) {
-        // TODO : Auto-generated method stub
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-
-    /**
-     * Gestion des QR codes :
-     */
-
-    @Override
-    public void onClick(View v) {
-        if(v.getId() == R.id.scan_button){
-            // On lance le scanner au clic sur notre bouton
-            new IntentIntegrator(this).initiateScan();
+        if(!geom.isEmpty() && etg0 && etg1 && etg2){
+            routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom, new SimpleLineSymbol(0x99990055, 5)));
+            Log.d("geom", ": " + geom.getType());
+            Log.d("geom_inter_length", ": " + geom.calculateLength2D());
         }
-    }
-
-    public void onActivityResult(int requestCode, int resultCode, Intent intent) {
-
-        // Nous utilisons la classe IntentIntegrator et sa fonction parseActivityResult pour parser le résultat du scan
-        IntentResult scanningResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, intent);
-        if (scanningResult != null) {
-
-            // Nous récupérons le contenu du code barre
-            String scanContent = scanningResult.getContents();
-
-            // Nous récupérons le format du code barre
-            String scanFormat = scanningResult.getFormatName();
-
-            TextView scan_format = (TextView) findViewById(R.id.scan_format);
-            TextView scan_content = (TextView) findViewById(R.id.scan_content);
-
-            // Nous affichons le résultat dans nos TextView
-            scan_format.setText("FORMAT: " + scanFormat);
-            scan_content.setText("CONTENT: " + scanContent);
-            Log.d("toto", scanContent);
-
-            // Test sur le different QR code scanné
-            // On utilise ces tests pour définir le point de départ ou des points intermédiaires par exemple
-            if(scanContent.equals( "QR code 01" ) )
-            {
-                Log.d("QR_code","QR code 01");
-                // On marque la geometrie du QR code sur la carte
-                // Rappel,on test avec le magasin "La grande recre"
-                mGraphicsLayer.addGraphic(new Graphic(projection, new SimpleMarkerSymbol(Color.RED, 10, STYLE.CROSS ) ));
-                mMapView.getCallout().hide();
-            }
-            if(scanContent.equals( "QR code 02" ) ) {Log.d("QR_code","QR code 02");}
-            if(scanContent.equals( "QR code 03" ) ) {Log.d("QR_code","QR code 03");}
-        }
-        else{
-            Toast toast = Toast.makeText(getApplicationContext(),
-                    "Aucune donnée reçu!", Toast.LENGTH_SHORT);
-            toast.show();
+        if (!geom_intersect_niv0.isEmpty() && etg0) {
+            routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom_intersect_niv0, new SimpleLineSymbol(0x99990055, 5)));
+            Log.d("geom0_inter", ": " + geom_intersect_niv0.getType());
+            Log.d("geom0_inter_length",": " + geom_intersect_niv0.calculateLength2D());
         }
 
+        if (!geom_intersect_niv1.isEmpty() && etg1) {
+            routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom_intersect_niv1, new SimpleLineSymbol(0x99990055, 5)));
+            Log.d("geom1_inter", ": " + geom_intersect_niv1.getType());
+            Log.d("geom1_inter_length",": " + geom_intersect_niv1.calculateLength2D());
+        }
+        if (!geom_intersect_niv2.isEmpty() && etg2) {
+            routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom_intersect_niv2, new SimpleLineSymbol(0x99990055, 5)));
+            Log.d("geom2_inter", ": " + geom_intersect_niv2.getType());
+            Log.d("geom2_inter_length", ": " + geom_intersect_niv2.calculateLength2D());
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
