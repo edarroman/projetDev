@@ -1,6 +1,7 @@
 package com.example.formation.androidprojet_v1;
 
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 
 import java.io.File;
@@ -39,6 +40,7 @@ import com.esri.core.geometry.Point;
 import com.esri.core.geometry.Polyline;
 import com.esri.core.geometry.SpatialReference;
 import com.esri.core.map.Graphic;
+import com.esri.core.symbol.PictureMarkerSymbol;
 import com.esri.core.symbol.SimpleLineSymbol;
 import com.esri.core.symbol.SimpleMarkerSymbol;
 import com.esri.core.symbol.SimpleMarkerSymbol.STYLE;
@@ -458,7 +460,14 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
             }
             // Add a graphic to the screen for the touch event
             Point mapPoint = mMapView.toMapPoint(point.getX(), point.getY());
-            Graphic graphic = new Graphic(mapPoint, new SimpleMarkerSymbol(Color.BLUE, 10, STYLE.DIAMOND));
+            //Graphic graphic = new Graphic(mapPoint, new SimpleMarkerSymbol(Color.BLUE, 10, STYLE.DIAMOND));
+
+            // TODO : se renseigner sur getDrawable()
+
+            Drawable marqueur = getResources().getDrawable(R.drawable.ic_action_marqueur);
+            //Log.d("Pic", "" + new PictureMarkerSymbol(marqueur));
+            Graphic graphic = new Graphic(mapPoint, new PictureMarkerSymbol(marqueur));
+
             mGraphicsLayer.addGraphic(graphic);
 
             try {
@@ -584,7 +593,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
                 Log.d("geom0_inter_length", ": " + geom_intersect_niv0.calculateLength2D());
             }
         }
-
         if(geom_intersect_niv1 != null) {
             if (!geom_intersect_niv1.isEmpty() && etg1Selected) {
                 routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom_intersect_niv1, ligSym));
@@ -592,12 +600,18 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
                 Log.d("geom1_inter_length", ": " + geom_intersect_niv1.calculateLength2D());
             }
         }
-
         if(geom_intersect_niv2 != null) {
             if (!geom_intersect_niv2.isEmpty() && etg2Selected) {
                 routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom_intersect_niv2, ligSym));
                 Log.d("geom2_inter", ": " + geom_intersect_niv2.getType());
                 Log.d("geom2_inter_length", ": " + geom_intersect_niv2.calculateLength2D());
+            }
+        }
+        if(geom!= null) {
+            if (!geom.isEmpty() && etg0Selected && etg1Selected && etg2Selected) {
+                routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom, ligSym));
+                Log.d("geom0_inter", ": " + geom.getType());
+                Log.d("geom0_inter_length", ": " + geom.calculateLength2D());
             }
         }
     }
