@@ -205,6 +205,16 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
 
                     ////////////////////////////////////////////////////////////////////////////////
 
+                    GeodatabaseFeatureTable tab_niv0 = gdb.getGeodatabaseTables().get(11);
+                    GeodatabaseFeatureTable tab_niv1 = gdb.getGeodatabaseTables().get(12);
+                    GeodatabaseFeatureTable tab_niv2 = gdb.getGeodatabaseTables().get(13);
+
+                    Geometry poubelle = new Polyline(); // Varaible utile si pas d'objet dans la base
+
+                    // Récupération des arcs dans la géodatabase  :
+                    // Comme nous avons plus de 512 arcs sur les étages 1 et 2
+                    // Nous avons dû procéder en deux fois pour récupérer les arcs de ces étages
+
                     // Définition du nombre d'arcs :
                     int i = array_geom_niv0.length;
                     int l1 = array_geom_niv1_1.length;
@@ -212,30 +222,23 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
                     int m1 = array_geom_niv2_1.length;
                     int m2 = array_geom_niv2_1.length;
 
-                    GeodatabaseFeatureTable tab_niv0 = gdb.getGeodatabaseTables().get(11);
-                    GeodatabaseFeatureTable tab_niv1 = gdb.getGeodatabaseTables().get(12);
-                    GeodatabaseFeatureTable tab_niv2 = gdb.getGeodatabaseTables().get(13);
-
-                    Geometry poubelle = new Polyline(); // Varaible utile si pas d'objet dans la base
-
-                    // Récupération des arcs dans la géodatabase :
+                    // Etage 0 :
                     for(int j=1; j<=i; j++){
                         if (tab_niv0.checkFeatureExists(j)) {
-
                             geom_niveau0 = tab_niv0.getFeature(j).getGeometry();
                             array_geom_niv0[j-1] = geom_niveau0;
-                        }
-                        else {array_geom_niv0[j-1] = poubelle;}
+                        } else {array_geom_niv0[j-1] = poubelle;}
                     }
 
+                    // Etage 1_1 :
                     for(int j=1; j<=l1; j++){
                         if (tab_niv1.checkFeatureExists(j)) {
                             geom_niveau1 = tab_niv1.getFeature(j).getGeometry();
                             array_geom_niv1_1[j-1] = geom_niveau1;
-                        }
-                        else {array_geom_niv1_1[j-1] = poubelle;}
+                        } else {array_geom_niv1_1[j-1] = poubelle;}
                     }
 
+                    // Etage 1_2 :
                     int k1 = 0;
                     for(int j=(l1+1); j<=l2; j++){
                         if (tab_niv1.checkFeatureExists(j)) {
@@ -243,21 +246,21 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
                             array_geom_niv1_2[k1] = geom_niveau1;
 
                             k1 = k1+1;
-                        }
-                        else {
+                        } else {
                             array_geom_niv1_1[i] = poubelle;
                             k1 = k1+1;
                         }
                     }
 
+                    // Etage 2_1 :
                     for(int j=1; j<=m1; j++){
                         if (tab_niv2.checkFeatureExists(j)) {
                             geom_niveau2 = tab_niv2.getFeature(j).getGeometry();
                             array_geom_niv2_1[j-1] = geom_niveau2;
-                        }
-                        else {array_geom_niv2_1[j-1] = poubelle;}
+                        } else {array_geom_niv2_1[j-1] = poubelle;}
                     }
 
+                    // Etage 2_2 :
                     int k2 = 0;
                     for(int j=(m1+1); j<=m2; j++){
                         if (tab_niv2.checkFeatureExists(j)) {
@@ -265,8 +268,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
                             array_geom_niv2_2[k2] = geom_niveau2;
 
                             k2 = k2+1;
-                        }
-                        else {
+                        } else {
                             array_geom_niv2_2[i] = poubelle;
                             k2 = k2+1;
                         }
@@ -275,21 +277,25 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
                     ////////////////////////////////////////////////////////////////////////////////
 
                     // Union des arcs :
+
+                    // Niveau 0:
                     geometries_niveau0 = geomen.union(array_geom_niv0, WKID_RGF93);
 
+                    // Niveau 1 :
                     geometries_niveau1_1 = geomen.union(array_geom_niv1_1, WKID_RGF93);
                     geometries_niveau1_2 = geomen.union(array_geom_niv1_2, WKID_RGF93);
                     array_geom_niv1_all[0] = geometries_niveau1_1;
                     array_geom_niv1_all[1] = geometries_niveau1_2;
                     geometries_niveau1_all = geomen.union(array_geom_niv1_all, WKID_RGF93);
 
-
+                    // Niveau 2 :
                     geometries_niveau2_1 = geomen.union(array_geom_niv2_1, WKID_RGF93);
                     geometries_niveau2_2 = geomen.union(array_geom_niv2_2, WKID_RGF93);
                     array_geom_niv2_all[0] = geometries_niveau2_1;
                     array_geom_niv2_all[1] = geometries_niveau2_2;
                     geometries_niveau2_all = geomen.union(array_geom_niv2_all, WKID_RGF93);
 
+                    // logs :
                     Log.d("geometries_niveau0", "" + geometries_niveau0.calculateLength2D());
                     Log.d("geometries_niveau1", "" + geometries_niveau1_all.calculateLength2D());
                     Log.d("geometries_niveau2", "" + geometries_niveau2_all.calculateLength2D());
@@ -318,7 +324,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
         String[] nom_etage = getResources().getStringArray(R.array.etage_array);
 
         // Test suivant la selection de l'utilisateur:
-
         mMapView.removeLayer(mTileLayer);
 
         if(etageSelec.equals( nom_etage[0])) {
@@ -560,7 +565,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * Fonction pour afficher l'itinéraire en fonction de l'étage sélectionner
+     * Fonction pour afficher l'itinéraire en fonction de l'étage sélectionné
      */
     public void afficherIti(){
         // On ne visualise que l'itinéraire au niveau selectionné :
@@ -570,14 +575,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
         // Remove any previous route Graphics
         if (routeHandle != -1) {
             mGraphicsLayer.removeGraphic(routeHandle);
-        }
-
-        if(geom != null) {
-            if (geom.isEmpty() && etg0Selected && etg1Selected && etg2Selected) {
-                routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom, ligSym));
-                Log.d("geom", ": " + geom.getType());
-                Log.d("geom_inter_length", ": " + geom.calculateLength2D());
-            }
         }
 
         if(geom_intersect_niv0 != null) {
