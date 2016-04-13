@@ -96,6 +96,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
     private Spinner dSpinner;
 
     // Variables utiles pour la gestion du multi-étage :
+    private boolean etgsSelected = false;
     private boolean etg0Selected = false;
     private boolean etg1Selected = false;
     private boolean etg2Selected = false;
@@ -165,7 +166,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
         // Retrieve the map and initial extent from XML layout
         mMapView = (MapView) findViewById(R.id.map);
 
-        // Set the tiled map service layer and add a graphics layer
+        // Mise en place des fonds et visibilité = false :
         mMapView.addLayer(mTileLayer0);
         mTileLayer0.setVisible(false);
 
@@ -178,6 +179,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
         mMapView.addLayer(mTileLayer);
         mTileLayer.setVisible(false);
 
+        // Ajout couche graphique :
         mMapView.addLayer(mGraphicsLayer);
 
         // Initialize the RouteTask and Locator with the local data
@@ -234,6 +236,10 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
                     GeodatabaseFeatureTable tab_niv1 = gdb.getGeodatabaseTables().get(12);
                     GeodatabaseFeatureTable tab_niv2 = gdb.getGeodatabaseTables().get(13);
 
+                    Log.d("tab_niv0", "" + tab_niv0);
+                    Log.d("tab_niv1", "" + tab_niv1);
+                    Log.d("tab_niv2", "" + tab_niv2);
+
                     Geometry poubelle = new Polyline(); // Varaible utile si pas d'objet dans la base
 
                     // Récupération des arcs dans la géodatabase  :
@@ -243,9 +249,9 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
                     // Définition du nombre d'arcs :
                     int i = array_geom_niv0.length;
                     int l1 = array_geom_niv1_1.length;
-                    int l2 = array_geom_niv1_1.length;
+                    int l2 = array_geom_niv1_2.length;
                     int m1 = array_geom_niv2_1.length;
-                    int m2 = array_geom_niv2_1.length;
+                    int m2 = array_geom_niv2_2.length;
 
                     // Etage 0 :
                     for(int j=1; j<=i; j++){
@@ -269,7 +275,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
                         if (tab_niv1.checkFeatureExists(j)) {
                             geom_niveau1 = tab_niv1.getFeature(j).getGeometry();
                             array_geom_niv1_2[k1] = geom_niveau1;
-
                             k1 = k1+1;
                         } else {
                             array_geom_niv1_1[i] = poubelle;
@@ -291,7 +296,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
                         if (tab_niv2.checkFeatureExists(j)) {
                             geom_niveau2 = tab_niv2.getFeature(j).getGeometry();
                             array_geom_niv2_2[k2] = geom_niveau2;
-
                             k2 = k2+1;
                         } else {
                             array_geom_niv2_2[i] = poubelle;
@@ -323,7 +327,12 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
                     // logs :
                     Log.d("geometries_niveau0", "" + geometries_niveau0.calculateLength2D());
                     Log.d("geometries_niveau1", "" + geometries_niveau1_all.calculateLength2D());
+                    Log.d("geometries_niveau1_1", "" + geometries_niveau1_1.calculateLength2D());
+                    Log.d("geometries_niveau1_2", "" + geometries_niveau1_2.calculateLength2D());
                     Log.d("geometries_niveau2", "" + geometries_niveau2_all.calculateLength2D());
+                    Log.d("geometries_niveau2_1", "" + geometries_niveau2_1.calculateLength2D());
+                    Log.d("geometries_niveau_2", "" + geometries_niveau2_2.calculateLength2D());
+
 
                 } catch (Exception e) {
                     popToast("Error while initializing :" + e.getMessage(), true);
@@ -348,50 +357,36 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
         // On recupere les noms des etages qui sont stockés dans ressources.strings.values
         String[] nom_etage = getResources().getStringArray(R.array.etage_array);
 
-        // On supprime l'ancien layer :
-        // mMapView.removeLayer(mTileLayer);
-
         // Test suivant la selection de l'utilisateur:
         if(etageSelec.equals(nom_etage[0])) {
-            mTileLayer.setVisible(false);
-            mTileLayer0.setVisible(true);
-            mTileLayer1.setVisible(false);
-            mTileLayer2.setVisible(false);
-
+            etgsSelected = false;
             etg0Selected = true;
             etg1Selected = false;
             etg2Selected = false;
         }
         if(etageSelec.equals(nom_etage[1])) {
-            mTileLayer.setVisible(false);
-            mTileLayer0.setVisible(false);
-            mTileLayer1.setVisible(true);
-            mTileLayer2.setVisible(false);
-
+            etgsSelected = false;
             etg0Selected = false;
             etg1Selected = true;
             etg2Selected = false;
         }
         if(etageSelec.equals(nom_etage[2])) {
-            mTileLayer.setVisible(false);
-            mTileLayer0.setVisible(false);
-            mTileLayer1.setVisible(false);
-            mTileLayer2.setVisible(true);
-
+            etgsSelected = false;
             etg0Selected = false;
             etg1Selected = false;
             etg2Selected = true;
         }
         if(etageSelec.equals(nom_etage[3])) {
-            mTileLayer.setVisible(true);
-            mTileLayer0.setVisible(false);
-            mTileLayer1.setVisible(false);
-            mTileLayer2.setVisible(false);
-
-            etg0Selected = true;
-            etg1Selected = true;
-            etg2Selected = true;
+            etgsSelected = true;
+            etg0Selected = false;
+            etg1Selected = false;
+            etg2Selected = false;
         }
+
+        mTileLayer.setVisible(etgsSelected);
+        mTileLayer0.setVisible(etg0Selected);
+        mTileLayer1.setVisible(etg1Selected);
+        mTileLayer2.setVisible(etg2Selected);
 
         ////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -634,7 +629,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
             }
         }
 
-        if(geom!= null && etg0Selected && etg1Selected && etg2Selected) {
+        if(geom!= null && etgsSelected) {
             if (!geom.isEmpty()) {
                 routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom, ligSym));
                 Log.d("geom_inter_length", ": " + geom.calculateLength2D());
