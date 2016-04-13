@@ -1,32 +1,26 @@
 package com.example.formation.androidprojet_v1;
 
-import android.content.DialogInterface;
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 
 import java.io.File;
 
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Vector;
-
-import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
-import android.os.Environment;
+
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
+
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.MotionEvent;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemSelectedListener;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.ListView;
-import android.widget.Spinner;
-import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.AdapterView.OnItemClickListener;
 
 import com.esri.android.map.GraphicsLayer;
 import com.esri.android.map.GraphicsLayer.RenderingMode;
@@ -52,7 +46,7 @@ import com.esri.core.tasks.na.RouteResult;
 import com.esri.core.tasks.na.RouteTask;
 import com.esri.core.tasks.na.StopGraphic;
 
-public class MainActivity extends Activity {
+public class MainActivity extends AppCompatActivity {
 
     // Define ArcGIS Elements
     MapView mMapView;
@@ -77,48 +71,28 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        ActionBar actionBar = getSupportActionBar();
+        actionBar.setDisplayHomeAsUpEnabled(true);
 
         File tpk = new File(extern + tpkPath);
         Log.d("RoutingAndGeocoding", "Find tpk: " + tpk.exists());
         Log.d("RoutingAndGeocoding", "Initialized tpk: " + mTileLayer.isInitialized());
-
-
         // Retrieve the map and initial extent from XML layout
         mMapView = (MapView) findViewById(R.id.map);
-
         // Set the tiled map service layer and add a graphics layer
         mMapView.addLayer(mTileLayer);
         mMapView.addLayer(mGraphicsLayer);
-
         // Initialize the RouteTask and Locator with the local data
         initializeRoutingAndGeocoding();
         mMapView.setOnTouchListener(new TouchListener(MainActivity.this, mMapView));
-
-
-
-        final Button depart = (Button) findViewById(R.id.depart);
-        depart.setText("Depart");
-        Intent mag = getIntent();
-        String magasin = mag.getStringExtra("mag");
-        if (mag == null) {
-            depart.setText(magasin);
-        }
-        depart.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, Listetype.class);
-                intent.putExtra("Liste_mag", lst_mag );
-                startActivity(intent);
-            }
-
-        });
-
     }
 
     private void initializeRoutingAndGeocoding() {
-
         // We will spin off the initialization in a new thread
         new Thread(new Runnable() {
-
             @Override
             public void run() {
                 // Get the external directory
@@ -131,15 +105,12 @@ public class MainActivity extends Activity {
                 //Hervé String networkName = "Streets_ND";
                 //String networkName = "jdce_ND";
                 String networkName = "GRAPH_Final_ND";
-
                 // Attempt to load the local geocoding and routing data
                 try {
                     mLocator = Locator.createLocalLocator(extern + locatorPath);
                     mRouteTask = RouteTask.createLocalRouteTask(extern + networkPath, networkName);
-
                     // open a local geodatabase
                     Geodatabase gdb = new Geodatabase(extern + networkPath);
-//
                    for(int i=0; i<=2; i++){
                        long nbr_lignes = gdb.getGeodatabaseTables().get(i).getNumberOfFeatures();
                        for(int l=1; l<=nbr_lignes; l++){
@@ -151,13 +122,8 @@ public class MainActivity extends Activity {
                            mag.add(nom_mag);
                            mag.add(i);
                            lst_mag.add(mag);
-
                        }
                    }
-
-
-//
-
                 } catch (Exception e) {
                     popToast("Error while initializing :" + e.getMessage(), true);
                     e.printStackTrace();
@@ -167,9 +133,7 @@ public class MainActivity extends Activity {
     }
 
     class TouchListener extends MapOnTouchListener {
-
         private int routeHandle = -1;
-
         @Override
         public void onLongPress(MotionEvent point) {
             // Our long press will clear the screen
@@ -177,10 +141,8 @@ public class MainActivity extends Activity {
             mGraphicsLayer.removeAll();
             mMapView.getCallout().hide();
         }
-
         @Override
         public boolean onSingleTap(MotionEvent point) {
-
             if (mLocator == null) {
                 popToast("Locator uninitialized", true);
                 return super.onSingleTap(point);
@@ -189,34 +151,28 @@ public class MainActivity extends Activity {
             Point mapPoint = mMapView.toMapPoint(point.getX(), point.getY());
             Graphic graphic = new Graphic(mapPoint, new SimpleMarkerSymbol(Color.BLUE, 10, STYLE.DIAMOND));
             mGraphicsLayer.addGraphic(graphic);
-
             try {
                 // Attempt to reverse geocode the point.
                 // Our input and output spatial reference will
                 // be the same as the map.
                 SpatialReference mapRef = mMapView.getSpatialReference();
                 LocatorReverseGeocodeResult result = mLocator.reverseGeocode(mapPoint, 50, mapRef, mapRef);
-
             } catch (Exception e) {
                 Log.v("Reverse Geocode", e.getMessage());
             }
-
             // Add the touch event as a stop
             StopGraphic stop = new StopGraphic(graphic);
             mStops.addFeature(stop);
-
             return true;
         }
 
         @Override
         public boolean onDoubleTap(MotionEvent point) {
-
             // Return default behavior if we did not initialize properly.
             if (mRouteTask == null) {
                 popToast("RouteTask uninitialized.", true);
                 return super.onDoubleTap(point);
             }
-
             try {
 
                 // Set the correct input spatial reference on the stops and the
@@ -246,11 +202,8 @@ public class MainActivity extends Activity {
                 Geometry geom = result.getRouteGraphic().getGeometry();
                 routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom, new SimpleLineSymbol(0x99990055, 5)));
                 mMapView.getCallout().hide();
-
                 // Get the list of directions from the result
                 List<RouteDirection> directions = result.getRoutingDirections();
-
-
                 // Iterate through all of the individual directions items and
                 // create a nicely formatted string for each.
                 List<String> formattedDirections = new ArrayList<String>();
@@ -259,45 +212,18 @@ public class MainActivity extends Activity {
                     formattedDirections.add(String.format("%s\nGo %.2f %s For %.2f Minutes", direction.getText(),
                             direction.getLength(), params.getDirectionsLengthUnit().name(), direction.getMinutes()));
                 }
-
                 // Add a summary String
                 formattedDirections.add(0, String.format("Total time: %.2f Mintues", result.getTotalMinutes()));
-
-
-
             } catch (Exception e) {
                 popToast("Solve Failed: " + e.getMessage(), true);
                 e.printStackTrace();
             }
             return true;
         }
-
         public TouchListener(Context context, MapView view) {
             super(context, view);
         }
     }
-
-    class DirectionsItemListener implements OnItemSelectedListener {
-
-        private List<RouteDirection> mDirections;
-
-        public DirectionsItemListener(List<RouteDirection> directions) {
-            mDirections = directions;
-        }
-
-        @Override
-        public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
-            // We have to account for the added summary String
-            if (mDirections != null && pos > 0 && pos <= mDirections.size())
-                mMapView.setExtent(mDirections.get(pos - 1).getGeometry());
-        }
-
-        @Override
-        public void onNothingSelected(AdapterView<?> arg0) {
-        }
-    }
-
-
     private void popToast(final String message, final boolean show) {
         // Simple helper method for showing toast on the main thread
         if (!show)
@@ -311,5 +237,34 @@ public class MainActivity extends Activity {
         });
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
 
+    private void choix(){
+        Intent intent_choix = new Intent(MainActivity.this, Choix.class);
+        intent_choix.putExtra("Liste_mag", lst_mag);
+        startActivity(intent_choix);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_choix) {
+            choix();
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
 }
+
+

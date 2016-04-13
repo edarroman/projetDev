@@ -11,7 +11,8 @@
         android:theme="@style/AppTheme">
         <activity
             android:name=".MainActivity"
-            android:label="C.O.B.R.A" >
+            android:label="C.O.B.R.A"
+            android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -19,6 +20,7 @@
         </activity>
         <activity android:name=".Listemagasin" />
         <activity android:name=".Listetype" />
+        <activity android:name=".Choix" />
     </application>
 
 </manifest>

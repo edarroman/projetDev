@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">AndroidProjet_V1</string>
+    <string name="action_choix">Choix</string>
 </resources>

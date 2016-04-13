@@ -58,17 +58,4 @@ public class Listetype extends Activity {
         });
     }
 
-
-    private void popToast(final String message, final boolean show) {
-        // Simple helper method for showing toast on the main thread
-        if (!show)
-            return;
-
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                Toast.makeText(Listetype.this, message, Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
 }

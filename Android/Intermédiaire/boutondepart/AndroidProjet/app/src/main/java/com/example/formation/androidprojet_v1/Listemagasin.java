@@ -29,6 +29,7 @@ public class Listemagasin extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.listemagasin);
 
+
         Intent i = getIntent();
         ArrayList lstmag = i.getIntegerArrayListExtra("Liste_mag");
         String Type = i.getStringExtra("type");
