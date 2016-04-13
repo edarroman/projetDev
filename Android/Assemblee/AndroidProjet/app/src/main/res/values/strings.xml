@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">C.O.B.R.A.</string>
+
+    <string name="choix_etage">Choissisez un etage</string>
+    <string-array name="etage_array">
+        <item>Etage 0</item>
+        <item>Etage 1</item>
+        <item>Etage 2</item>
+        <item>Graphe complet</item>
+    </string-array>
+
+</resources>
