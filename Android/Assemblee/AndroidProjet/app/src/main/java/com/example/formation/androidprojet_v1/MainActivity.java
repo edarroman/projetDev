@@ -108,18 +108,11 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
     private Geometry projection_niv0 = null;
     private Geometry projection_niv1 = null;
     private Geometry projection_niv2 = null;
-    // Geometrie par niveau
-    private Geometry geom_niveau0 = null;
-    private Geometry geom_niveau1 = null;
-    private Geometry geom_niveau2 = null;
     // Geometrie union :
     private Geometry geometries_niveau0 = null;
-    private Geometry geometries_niveau1_1 = null;
+    private Geometry geometries_niveau1 = null;
     private Geometry geometries_niveau1_2 = null;
-    private Geometry geometries_niveau1_all = null;
-    private Geometry geometries_niveau2_1 = null;
-    private Geometry geometries_niveau2_2 = null;
-    private Geometry geometries_niveau2_all = null;
+    private Geometry geometries_niveau2 = null;
     // Géomtrie intersections :
     private Geometry geom = null;
     private Geometry geom_intersect_niv0 = null;
@@ -138,8 +131,8 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
     private Geometry[] array_geom_niv1_2 = new Geometry[377];
     private Geometry[] array_geom_niv2_1 = new Geometry[380];
     private Geometry[] array_geom_niv2_2 = new Geometry[400];
-    private Geometry[] array_geom_niv1_all = new Geometry[2];
-    private Geometry[] array_geom_niv2_all = new Geometry[2];
+    private Geometry[] array_geom_niv1 = new Geometry[2];
+    private Geometry[] array_geom_niv2 = new Geometry[2];
 
     // Gestion itinéraire :
     private int routeHandle = -1;
@@ -236,11 +229,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
                     GeodatabaseFeatureTable tab_niv1 = gdb.getGeodatabaseTables().get(12);
                     GeodatabaseFeatureTable tab_niv2 = gdb.getGeodatabaseTables().get(13);
 
-                    Log.d("tab_niv0", "" + tab_niv0);
-                    Log.d("tab_niv1", "" + tab_niv1);
-                    Log.d("tab_niv2", "" + tab_niv2);
-
-                    Geometry poubelle = new Polyline(); // Varaible utile si pas d'objet dans la base
+                    Log.d("tab1", tab_niv1.getTableName());
 
                     // Récupération des arcs dans la géodatabase  :
                     // Comme nous avons plus de 512 arcs sur les étages 1 et 2
@@ -253,40 +242,36 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
                     int m1 = array_geom_niv2_1.length;
                     int m2 = array_geom_niv2_2.length;
 
+                    Geometry poubelle = new Polyline(); // Varaible utile si pas d'objet dans la base
+
                     // Etage 0 :
                     for(int j=1; j<=i; j++){
                         if (tab_niv0.checkFeatureExists(j)) {
-                            geom_niveau0 = tab_niv0.getFeature(j).getGeometry();
-                            array_geom_niv0[j-1] = geom_niveau0;
+                            array_geom_niv0[j-1] = tab_niv0.getFeature(j,WKID_RGF93).getGeometry();
                         } else {array_geom_niv0[j-1] = poubelle;}
                     }
 
                     // Etage 1_1 :
                     for(int j=1; j<=l1; j++){
                         if (tab_niv1.checkFeatureExists(j)) {
-                            geom_niveau1 = tab_niv1.getFeature(j).getGeometry();
-                            array_geom_niv1_1[j-1] = geom_niveau1;
+                            array_geom_niv1_1[j-1] = tab_niv1.getFeature(j,WKID_RGF93).getGeometry();
                         } else {array_geom_niv1_1[j-1] = poubelle;}
                     }
 
                     // Etage 1_2 :
                     int k1 = 0;
+                    double longTot = 0;
                     for(int j=l1+1; j<=l1+l2; j++){
                         if (tab_niv1.checkFeatureExists(j)) {
-                            geom_niveau1 = tab_niv1.getFeature(j).getGeometry();
-                            array_geom_niv1_2[k1] = geom_niveau1;
-                            k1 = k1+1;
-                        } else {
-                            array_geom_niv1_1[i] = poubelle;
-                            k1 = k1+1;
-                        }
+                            array_geom_niv1_2[k1] = tab_niv1.getFeature(j,WKID_RGF93).getGeometry();
+                        } else {array_geom_niv1_2[k1] = poubelle;}
+                        k1 = k1+1;
                     }
 
                     // Etage 2_1 :
                     for(int j=1; j<=m1; j++){
                         if (tab_niv2.checkFeatureExists(j)) {
-                            geom_niveau2 = tab_niv2.getFeature(j).getGeometry();
-                            array_geom_niv2_1[j-1] = geom_niveau2;
+                            array_geom_niv2_1[j-1] = tab_niv2.getFeature(j,WKID_RGF93).getGeometry();
                         } else {array_geom_niv2_1[j-1] = poubelle;}
                     }
 
@@ -294,13 +279,9 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
                     int k2 = 0;
                     for(int j=m1+1; j<=m1+m2; j++){
                         if (tab_niv2.checkFeatureExists(j)) {
-                            geom_niveau2 = tab_niv2.getFeature(j).getGeometry();
-                            array_geom_niv2_2[k2] = geom_niveau2;
-                            k2 = k2+1;
-                        } else {
-                            array_geom_niv2_2[i] = poubelle;
-                            k2 = k2+1;
-                        }
+                            array_geom_niv2_2[k2] = tab_niv2.getFeature(j,WKID_RGF93).getGeometry();
+                        } else {array_geom_niv2_2[k2] = poubelle;}
+                        k2 = k2+1;
                     }
 
                     ////////////////////////////////////////////////////////////////////////////////
@@ -311,27 +292,19 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
                     geometries_niveau0 = geomen.union(array_geom_niv0, WKID_RGF93);
 
                     // Niveau 1 :
-                    geometries_niveau1_1 = geomen.union(array_geom_niv1_1, WKID_RGF93);
-                    geometries_niveau1_2 = geomen.union(array_geom_niv1_2, WKID_RGF93);
-                    array_geom_niv1_all[0] = geometries_niveau1_1;
-                    array_geom_niv1_all[1] = geometries_niveau1_2;
-                    geometries_niveau1_all = geomen.union(array_geom_niv1_all, WKID_RGF93);
+                    array_geom_niv1[0] = geomen.union(array_geom_niv1_1, WKID_RGF93);
+                    array_geom_niv1[1] = geomen.union(array_geom_niv1_2, WKID_RGF93);
+                    geometries_niveau1 = geomen.union(array_geom_niv1, WKID_RGF93);
 
                     // Niveau 2 :
-                    geometries_niveau2_1 = geomen.union(array_geom_niv2_1, WKID_RGF93);
-                    geometries_niveau2_2 = geomen.union(array_geom_niv2_2, WKID_RGF93);
-                    array_geom_niv2_all[0] = geometries_niveau2_1;
-                    array_geom_niv2_all[1] = geometries_niveau2_2;
-                    geometries_niveau2_all = geomen.union(array_geom_niv2_all, WKID_RGF93);
+                    array_geom_niv2[0] = geomen.union(array_geom_niv2_1, WKID_RGF93);
+                    array_geom_niv2[1] = geomen.union(array_geom_niv2_2, WKID_RGF93);
+                    geometries_niveau2 = geomen.union(array_geom_niv2, WKID_RGF93);
 
                     // logs :
                     Log.d("geometries_niveau0", "" + geometries_niveau0.calculateLength2D());
-                    Log.d("geometries_niveau1", "" + geometries_niveau1_all.calculateLength2D());
-                    Log.d("geometries_niveau1_1", "" + geometries_niveau1_1.calculateLength2D());
-                    Log.d("geometries_niveau1_2", "" + geometries_niveau1_2.calculateLength2D());
-                    Log.d("geometries_niveau2", "" + geometries_niveau2_all.calculateLength2D());
-                    Log.d("geometries_niveau2_1", "" + geometries_niveau2_1.calculateLength2D());
-                    Log.d("geometries_niveau_2", "" + geometries_niveau2_2.calculateLength2D());
+                    Log.d("geometries_niveau1", "" + geometries_niveau1.calculateLength2D());
+                    Log.d("geometries_niveau2", "" + geometries_niveau2.calculateLength2D());
 
 
                 } catch (Exception e) {
@@ -558,10 +531,10 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
                 projection_niv0 = geomen.project(geometries_niveau0, WKID_RGF93, mapRef);
 
                 //geometries_niveau1 = geomen.union(array_geom_niv1, WKID_RGF93);
-                projection_niv1 = geomen.project(geometries_niveau1_all, WKID_RGF93, mapRef);
+                projection_niv1 = geomen.project(geometries_niveau1, WKID_RGF93, mapRef);
 
                 //geometries_niveau2 = geomen.union(array_geom_niv2, WKID_RGF93);
-                projection_niv2 = geomen.project(geometries_niveau2_all, WKID_RGF93, mapRef);
+                projection_niv2 = geomen.project(geometries_niveau2, WKID_RGF93, mapRef);
 
                 ////////////////////////////////////////////////////////////////////////////////////
 
