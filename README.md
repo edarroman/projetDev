@@ -19,16 +19,16 @@ secours.
 
 - Compléter le graphe de déplacement piéton
 - Créer une application mobile Android permettant :
-o D’afficher une carte/plan de façon géoréférencée ou non
-o De stocker une base de données géolocalisée contenant la position des points
+    - D’afficher une carte/plan de façon géoréférencée ou non
+    - De stocker une base de données géolocalisée contenant la position des points
 d’intérêts du centre commercial (services, boutiques, commodités, etc.)
-o De se positionner sans système GPS (ex : lire des QR-codes et les associer à une
+    - De se positionner sans système GPS (ex : lire des QR-codes et les associer à une
 position géographique connue)
-o De calculer des itinéraires entre une position donnée, par exemple grâce au QRcodes,
+    - De calculer des itinéraires entre une position donnée, par exemple grâce au QRcodes,
 et un point d’intérêt choisi.
-o D’afficher le résultat du calcul sur la carte.
+    - D’afficher le résultat du calcul sur la carte.
 Et, si le temps vous le permet :
-o De prendre en compte l’aspect multi-niveau du centre commercial.
+    - De prendre en compte l’aspect multi-niveau du centre commercial.
 
 ## Intérêts :
 - Application très pratique de la géomatique
