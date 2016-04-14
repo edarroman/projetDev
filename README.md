@@ -27,7 +27,6 @@ position géographique connue)
     - De calculer des itinéraires entre une position donnée, par exemple grâce au QRcodes,
 et un point d’intérêt choisi.
     - D’afficher le résultat du calcul sur la carte.
-Et, si le temps vous le permet :
     - De prendre en compte l’aspect multi-niveau du centre commercial.
 
 ## Intérêts :
