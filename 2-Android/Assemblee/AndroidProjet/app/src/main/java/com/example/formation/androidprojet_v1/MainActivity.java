@@ -1,26 +1,17 @@
 package com.example.formation.androidprojet_v1;
 
-import android.content.Intent;
-import android.graphics.drawable.Drawable;
-import android.os.Bundle;
-
-import java.io.File;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Vector;
-
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
+import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -48,7 +39,6 @@ import com.esri.core.tasks.geocode.Locator;
 import com.esri.core.tasks.geocode.LocatorReverseGeocodeResult;
 import com.esri.core.tasks.na.NAFeaturesAsFeature;
 import com.esri.core.tasks.na.Route;
-import com.esri.core.tasks.na.RouteDirection;
 import com.esri.core.tasks.na.RouteParameters;
 import com.esri.core.tasks.na.RouteResult;
 import com.esri.core.tasks.na.RouteTask;
@@ -56,12 +46,29 @@ import com.esri.core.tasks.na.StopGraphic;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
+import java.io.File;
+
+// TODO en fonction carte sd ou non changer chemin (Fonction à coder) :
+
 /*
-private final String tpkPath = "/ProjArcades/ArcGIS/arcades.tpk";
+
+// SD card :
+
+private final String chTpk = "/ProjArcades/ArcGIS/";
 
 String locatorPath = "/ProjArcades/ArcGIS/Geocoding/MGRS.loc";
 String networkPath = "/ProjArcades/ArcGIS/Routing/base_de_donnees.geodatabase";
 String networkName = "GRAPH_Final_ND";
+
+OU
+
+// Autre :
+private final String chTpk = "/Android/data/com.example.formation.androidprojet_v1/ArcGIS/";
+
+String locatorPath = "/Android/data/com.example.formation.androidprojet_v1/ArcGIS/Geocoding/MGRS.loc";
+String networkPath = "/Android/data/com.example.formation.androidprojet_v1/ArcGIS/Routing/base_de_donnees.geodatabase";
+String networkName = "GRAPH_Final_ND";
+
 */
 
 public class MainActivity extends Activity implements OnItemSelectedListener, View.OnClickListener {
@@ -74,7 +81,13 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
     private MapView mMapView;
 
     private final String extern = Environment.getExternalStorageDirectory().getPath();
-    private String chTpk = "/ProjArcades/ArcGIS/"; // TODO chemin qui change en fonction SD card ou non : trouver automatiquement
+    /*
+    // Sd card :
+    private final String chTpk = "/ProjArcades/ArcGIS/";
+     */
+    // Sans sd card :
+    private final String chTpk = "/Android/data/com.example.formation.androidprojet_v1/ArcGIS/"; // TODO chemin qui change en fonction SD card ou non : trouver automatiquement
+
 
     // Variable pour image de fond :
     private String tpkPath = chTpk +"arcades.tpk";
@@ -199,8 +212,16 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
                 // TODO : Modification automatique en fonction du type d'appareil (SD ou non)
 
                 // Get the external directory
+                /*
+                // SdCard
                 String locatorPath = "/ProjArcades/ArcGIS/Geocoding/MGRS.loc";
                 String networkPath = "/ProjArcades/ArcGIS/Routing/base_de_donnees.geodatabase";
+                */
+
+                // Sans carte Sd :
+                String locatorPath = "/Android/data/com.example.formation.androidprojet_v1/ArcGIS/Geocoding/MGRS.loc";
+                String networkPath = "/Android/data/com.example.formation.androidprojet_v1/ArcGIS/Routing/base_de_donnees.geodatabase";
+
                 String networkName = "GRAPH_Final_ND";
 
                 // Attempt to load the local geocoding and routing data
