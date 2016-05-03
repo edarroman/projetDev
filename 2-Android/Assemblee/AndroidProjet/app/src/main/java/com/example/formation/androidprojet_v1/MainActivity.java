@@ -539,7 +539,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
             }
 
             try {
-
                 // Set the correct input spatial reference on the stops and the
                 // desired output spatial reference on the RouteParameters object.
                 RouteParameters params = mRouteTask.retrieveDefaultRouteTaskParameters();
@@ -554,10 +553,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
                     String[] restrictions = {""};
                     params.setRestrictionAttributeNames(restrictions);
                 }
-
-
-
-                Log.d("Restrictions",""+ params.getRestrictionAttributeNames());
 
                 // Set the stops and since we want driving directions,
                 // returnDirections==true
