@@ -52,4 +52,10 @@
         android:layout_below="@+id/scan_format"
         android:layout_centerHorizontal="true" />
 
+    <CheckBox
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/checkBoxRes"
+        android:checked="false" />
+
 </RelativeLayout>

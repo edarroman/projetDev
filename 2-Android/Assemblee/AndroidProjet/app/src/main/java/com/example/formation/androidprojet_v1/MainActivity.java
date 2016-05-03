@@ -13,6 +13,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -149,6 +150,11 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
     // Gestion itinéraire :
     private int routeHandle = -1;
 
+    // Variable de restrictions :
+    private CheckBox checkBoxRes = null;
+    private String resTxt;
+    private boolean estRestreint = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -186,6 +192,12 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
 
         // Ajout couche graphique :
         mMapView.addLayer(mGraphicsLayer);
+
+        //Restriction :
+        checkBoxRes = (CheckBox)findViewById(R.id.checkBoxRes);
+        resTxt = getResources().getString(R.string.rest);
+        checkBoxRes.setText(resTxt);
+        checkBoxRes.setOnClickListener(checkedListener);
 
         // Initialize the RouteTask and Locator with the local data
         initializeRoutingAndGeocoding();
@@ -535,6 +547,18 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
                 params.setOutSpatialReference(mapRef);
                 mStops.setSpatialReference(mapRef);
 
+                if(estRestreint){
+                    String[] restrictions = {"Restriction"};
+                    params.setRestrictionAttributeNames(restrictions);
+                } else{
+                    String[] restrictions = {""};
+                    params.setRestrictionAttributeNames(restrictions);
+                }
+
+
+
+                Log.d("Restrictions",""+ params.getRestrictionAttributeNames());
+
                 // Set the stops and since we want driving directions,
                 // returnDirections==true
                 params.setStops(mStops);
@@ -583,7 +607,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
                 projection = geomen.project(geom_QR_code, WKID_RGF93, mapRef);
                 */
                 mMapView.getCallout().hide();
-                
+
             } catch (Exception e) {
                 popToast("Solve Failed: " + e.getMessage(), true);
                 e.printStackTrace();
@@ -591,8 +615,23 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
             return true;
         }
 
-        public TouchListener(Context context, MapView view) {super(context, view);}
+        public TouchListener(Context context, MapView view) {
+            super(context, view);}
     }
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /**
+    * Listener du bouton de la restriction.
+     * */
+    private View.OnClickListener checkedListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            if(((CheckBox)v).isChecked()) {
+                estRestreint = true;
+            }else{
+                estRestreint = false;
+            }
+        }
+    };
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**

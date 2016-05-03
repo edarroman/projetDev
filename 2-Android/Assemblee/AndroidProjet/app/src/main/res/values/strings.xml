@@ -9,4 +9,6 @@
         <item>Graphe complet</item>
     </string-array>
 
+    <string name="rest">Mobilité réduite ?</string>
+
 </resources>
