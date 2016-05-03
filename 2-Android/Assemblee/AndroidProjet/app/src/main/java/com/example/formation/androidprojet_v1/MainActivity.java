@@ -81,13 +81,13 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
     private MapView mMapView;
 
     private final String extern = Environment.getExternalStorageDirectory().getPath();
-    /*
+
     // Sd card :
     private final String chTpk = "/ProjArcades/ArcGIS/";
-     */
+     /*
     // Sans sd card :
     private final String chTpk = "/Android/data/com.example.formation.androidprojet_v1/ArcGIS/"; // TODO chemin qui change en fonction SD card ou non : trouver automatiquement
-
+    */
 
     // Variable pour image de fond :
     private String tpkPath = chTpk +"arcades.tpk";
@@ -116,7 +116,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
 
     // Variables utiles à la gestion du QR_code :
     private Geometry geom_QR_code = null;
-    private Geometry projection = null;
 
     private Geometry projection_niv0 = null;
     private Geometry projection_niv1 = null;
@@ -212,15 +211,16 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
                 // TODO : Modification automatique en fonction du type d'appareil (SD ou non)
 
                 // Get the external directory
-                /*
+
                 // SdCard
                 String locatorPath = "/ProjArcades/ArcGIS/Geocoding/MGRS.loc";
                 String networkPath = "/ProjArcades/ArcGIS/Routing/base_de_donnees.geodatabase";
-                */
 
+                /*
                 // Sans carte Sd :
                 String locatorPath = "/Android/data/com.example.formation.androidprojet_v1/ArcGIS/Geocoding/MGRS.loc";
                 String networkPath = "/Android/data/com.example.formation.androidprojet_v1/ArcGIS/Routing/base_de_donnees.geodatabase";
+                */
 
                 String networkName = "GRAPH_Final_ND";
 
@@ -409,6 +409,8 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
         // Nous utilisons la classe IntentIntegrator et sa fonction parseActivityResult pour parser le résultat du scan
         IntentResult scanningResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, intent);
         if (scanningResult != null) {
+            // Récupération référence spatiale de  la vue :
+            SpatialReference mapRef = mMapView.getSpatialReference();
 
             // Nous récupérons le contenu du code barre
             String scanContent = scanningResult.getContents();
@@ -422,7 +424,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
             // Nous affichons le résultat dans nos TextView
             scan_format.setText("FORMAT: " + scanFormat);
             scan_content.setText("CONTENT: " + scanContent);
-            Log.d("toto", scanContent);
+            Log.d("Scan content", scanContent);
 
             // Test sur le different QR code scanné
             // On utilise ces tests pour définir le point de départ ou des points intermédiaires par exemple
@@ -431,8 +433,9 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
                 Log.d("QR_code","QR code 01");
                 // On marque la geometrie du QR code sur la carte
                 // Rappel,on test avec le magasin "La grande recre"
-                mGraphicsLayer.addGraphic(new Graphic(projection, new SimpleMarkerSymbol(Color.RED, 10, STYLE.CROSS ) ));
-                mMapView.getCallout().hide();
+                Geometry projection = geomen.project(geom_QR_code, WKID_RGF93, mapRef);
+                mGraphicsLayer.addGraphic(new Graphic(projection, new SimpleMarkerSymbol(Color.RED, 10, STYLE.CROSS)));
+                //mMapView.getCallout().hide();
             }
             if(scanContent.equals( "QR code 02" ) ) {Log.d("QR_code","QR code 02");}
             if(scanContent.equals( "QR code 03" ) ) {Log.d("QR_code","QR code 03");}
@@ -573,13 +576,14 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
                 //Gestion affichage au moment du calcul d'itinéraire :
 
                 afficherIti();
-
+                /*
                 ////////////////////////////////////////////////////////////////////////////////////
 
                 //QR code
                 projection = geomen.project(geom_QR_code, WKID_RGF93, mapRef);
 
                 mMapView.getCallout().hide();
+                */
 
             } catch (Exception e) {
                 popToast("Solve Failed: " + e.getMessage(), true);
@@ -596,12 +600,13 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
      * Fonction pour afficher l'itinéraire en fonction de l'étage sélectionné
      */
     public void afficherIti(){
-        // On ne visualise que l'itinéraire au niveau selectionné :
+        // Défintion symbole pour l'itinéraire :
         SimpleLineSymbol ligSym = new SimpleLineSymbol(0x99990055, 5);
 
         // Remove any previous route Graphics
         mGraphicsLayer.removeGraphic(routeHandle);
 
+        // On ne visualise que l'itinéraire au niveau selectionné :
         if(geom_intersect_niv0 != null && etg0Selected) {
             if (!geom_intersect_niv0.isEmpty()) {
                 routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom_intersect_niv0, ligSym));
