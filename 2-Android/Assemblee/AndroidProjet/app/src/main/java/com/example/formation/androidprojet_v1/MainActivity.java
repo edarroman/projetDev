@@ -581,10 +581,9 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
 
                 //QR code
                 projection = geomen.project(geom_QR_code, WKID_RGF93, mapRef);
-
-                mMapView.getCallout().hide();
                 */
-
+                mMapView.getCallout().hide();
+                
             } catch (Exception e) {
                 popToast("Solve Failed: " + e.getMessage(), true);
                 e.printStackTrace();
