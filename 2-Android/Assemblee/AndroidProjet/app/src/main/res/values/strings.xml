@@ -11,4 +11,6 @@
 
     <string name="rest">Mobilité réduite ?</string>
 
+    <string name="qr">Scanner un QR code</string>
+
 </resources>

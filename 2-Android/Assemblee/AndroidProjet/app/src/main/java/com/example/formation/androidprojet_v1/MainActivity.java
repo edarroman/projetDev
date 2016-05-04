@@ -36,6 +36,7 @@ import com.esri.core.symbol.PictureMarkerSymbol;
 import com.esri.core.symbol.SimpleLineSymbol;
 import com.esri.core.symbol.SimpleMarkerSymbol;
 import com.esri.core.symbol.SimpleMarkerSymbol.STYLE;
+import com.esri.core.table.TableException;
 import com.esri.core.tasks.geocode.Locator;
 import com.esri.core.tasks.geocode.LocatorReverseGeocodeResult;
 import com.esri.core.tasks.na.NAFeaturesAsFeature;
@@ -48,6 +49,7 @@ import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 
 // TODO en fonction carte sd ou non changer chemin (Fonction à coder) :
 
@@ -152,7 +154,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
 
     // Variable de restrictions :
     private CheckBox checkBoxRes = null;
-    private String resTxt;
     private boolean estRestreint = false;
 
 
@@ -195,7 +196,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
 
         //Restriction :
         checkBoxRes = (CheckBox)findViewById(R.id.checkBoxRes);
-        resTxt = getResources().getString(R.string.rest);
+        String resTxt = getResources().getString(R.string.rest);
         checkBoxRes.setText(resTxt);
         checkBoxRes.setOnClickListener(checkedListener);
 
@@ -204,8 +205,14 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
         mMapView.setOnTouchListener(new TouchListener(MainActivity.this, mMapView));
 
         // QR code
-        Button mybutton = (Button) findViewById(R.id.scan_button);
-        mybutton.setOnClickListener(this);
+        Button qrButton = (Button) findViewById(R.id.scan_button);
+        String qrTxt = getResources().getString(R.string.qr);
+        qrButton.setText(qrTxt);
+        qrButton.setOnClickListener(this);
+
+        // Test stop selec :
+        Button testButton = (Button) findViewById(R.id.test_button);
+        testButton.setOnClickListener(testListener);
     }
 
     /**
@@ -613,6 +620,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
         public TouchListener(Context context, MapView view) {
             super(context, view);}
     }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /**
     * Listener du bouton de la restriction.
@@ -627,6 +635,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
             }
         }
     };
+
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
@@ -683,4 +692,37 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
             }
         });
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /**
+     * Tests :
+     */
+
+    private View.OnClickListener testListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            String networkPath = "/ProjArcades/ArcGIS/Routing/base_de_donnees.geodatabase";
+            Geodatabase gdb = null;
+            try {
+                gdb = new Geodatabase(extern + networkPath);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+
+            GeodatabaseFeatureTable point_joint0 = gdb.getGeodatabaseTables().get(0);
+
+            try {
+                Geometry ptTest = point_joint0.getFeature(1).getGeometry();
+                SpatialReference mapRef = mMapView.getSpatialReference();
+                Geometry projection = geomen.project(ptTest, WKID_RGF93, mapRef);
+
+                mGraphicsLayer.addGraphic(new Graphic(projection, new SimpleMarkerSymbol(Color.RED, 10, STYLE.CROSS)));
+
+                StopGraphic stop = new StopGraphic(projection);
+                mStops.addFeature(stop);
+            } catch (TableException e) {
+                e.printStackTrace();
+            }
+        }
+    };
 }
