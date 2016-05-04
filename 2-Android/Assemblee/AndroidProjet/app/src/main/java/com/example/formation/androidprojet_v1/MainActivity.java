@@ -156,6 +156,9 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
     private CheckBox checkBoxRes = null;
     private boolean estRestreint = false;
 
+    // Test :
+    private Geometry depart;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -714,12 +717,13 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
             try {
                 Geometry ptTest = point_joint0.getFeature(1).getGeometry();
                 SpatialReference mapRef = mMapView.getSpatialReference();
-                Geometry projection = geomen.project(ptTest, WKID_RGF93, mapRef);
+                depart = geomen.project(ptTest, WKID_RGF93, mapRef);
 
-                mGraphicsLayer.addGraphic(new Graphic(projection, new SimpleMarkerSymbol(Color.RED, 10, STYLE.CROSS)));
+                mGraphicsLayer.addGraphic(new Graphic(depart, new SimpleMarkerSymbol(Color.RED, 10, STYLE.CROSS)));
 
-                StopGraphic stop = new StopGraphic(projection);
+                StopGraphic stop = new StopGraphic(depart);
                 mStops.addFeature(stop);
+                
             } catch (TableException e) {
                 e.printStackTrace();
             }
