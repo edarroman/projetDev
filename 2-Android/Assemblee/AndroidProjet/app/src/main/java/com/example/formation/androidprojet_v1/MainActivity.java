@@ -235,14 +235,9 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
                 // Get the external directory
 
                 // SdCard
-                String locatorPath = "/ProjArcades/ArcGIS/Geocoding/MGRS.loc";
-                String networkPath = "/ProjArcades/ArcGIS/Routing/base_de_donnees.geodatabase";
+                String locatorPath = chTpk + "/Geocoding/MGRS.loc";
+                String networkPath = chTpk + "/Routing/base_de_donnees.geodatabase";
 
-                /*
-                // Sans carte Sd :
-                String locatorPath = "/Android/data/com.example.formation.androidprojet_v1/ArcGIS/Geocoding/MGRS.loc";
-                String networkPath = "/Android/data/com.example.formation.androidprojet_v1/ArcGIS/Routing/base_de_donnees.geodatabase";
-                */
 
                 String networkName = "GRAPH_Final_ND";
 
@@ -723,7 +718,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
 
                 StopGraphic stop = new StopGraphic(depart);
                 mStops.addFeature(stop);
-                
+
             } catch (TableException e) {
                 e.printStackTrace();
             }
