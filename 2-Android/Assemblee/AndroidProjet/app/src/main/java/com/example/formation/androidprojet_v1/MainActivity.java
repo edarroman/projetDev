@@ -726,9 +726,11 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
 
                 afficherIti();
 
+
+
                 ////////////////////////////////////////////////////////////////////////////////////
 
-                // Gestion de
+                // Gestion du magasin le plus proche :
 
                 // TODO : projection_fnac = depart
                 // TODO : niveau = niveau du point de depart
@@ -770,7 +772,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
                     Log.d("texte3",""+mag);
                     int color = Color.rgb(255, 1, 1);
                     if (mag != null) {
-                        routeHandle = mGraphicsLayer.addGraphic(new Graphic(mag, new TextSymbol(taille, texte, color)));
+                        mGraphicsLayer.addGraphic(new Graphic(mag, new TextSymbol(taille, texte, color)));
                     }
 
                     //Drawable fnac = getDrawable(R.drawable.ic_action_fnac);
@@ -780,13 +782,13 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
                     Geometry magasin = geomen.intersect(buff_niv1, projection_mag_niv1, mapRef);
                     int taille = 14;
                     double dist_mag1_ref = 1000;
-                    //String texte = "bonjour";
+
                     String texte = null;
                     Geometry mag = null;
                     for (int r=0; r<lst_mag_niveau1.size(); r++){
                         Geometry mag_niv1_r = geomen.project(mag_niv1_geom[r], WKID_RGF93, mapRef);
                         double dist_mag1 = geomen.distance(magasin, mag_niv1_r, mapRef);
-                        //Log.d("texte",""+dist_mag1);
+
                         if (dist_mag1 < dist_mag1_ref && dist_mag1!=0){
                             texte = lst_mag_niveau1.get(r).toString();
                             mag = geomen.project(mag_niv1_geom[r], WKID_RGF93, mapRef);;
@@ -797,7 +799,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
                     Log.d("texte3",""+mag);
                     int color = Color.rgb(1, 255, 1);
                     if (mag != null) {
-                        routeHandle = mGraphicsLayer.addGraphic(new Graphic(mag, new TextSymbol(taille, texte, color)));
+                        mGraphicsLayer.addGraphic(new Graphic(mag, new TextSymbol(taille, texte, color)));
                     }
                 } else if (niveau == 2){
                     Polygon buff_niv2 = geomen.buffer(projection_fnac, mapRef, distance_niv2, meter);
@@ -821,9 +823,10 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
                     Log.d("texte3",""+mag);
                     int color = Color.rgb(1, 1, 255);
                     if (mag != null) {
-                        routeHandle = mGraphicsLayer.addGraphic(new Graphic(mag, new TextSymbol(taille, texte, color)));
+                        mGraphicsLayer.addGraphic(new Graphic(mag, new TextSymbol(taille, texte, color)));
                     }
                 }
+
 
                 mMapView.getCallout().hide();
 
