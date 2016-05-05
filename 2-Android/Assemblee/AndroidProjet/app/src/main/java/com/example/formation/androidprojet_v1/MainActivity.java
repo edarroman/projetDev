@@ -60,7 +60,7 @@ import java.util.Map;
 import java.util.Vector;
 
 
-public class MainActivity extends Activity implements OnItemSelectedListener, View.OnClickListener {
+public class MainActivity extends Activity  {
 
     /**
      * Déclaration des variables globales :
@@ -71,11 +71,13 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
 
     private final String extern = Environment.getExternalStorageDirectory().getPath();
 
+    // TODO : chemin qui change en fonction SD card ou non : trouver automatiquement
+
     // Sd card :
     private final String chTpk = "/ProjArcades/ArcGIS/";
      /*
     // Sans sd card :
-    private final String chTpk = "/Android/data/com.example.formation.androidprojet_v1/ArcGIS/"; // TODO chemin qui change en fonction SD card ou non : trouver automatiquement
+    private final String chTpk = "/Android/data/com.example.formation.androidprojet_v1/ArcGIS/";
     */
 
     // Variable pour image de fond :
@@ -157,6 +159,12 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
     // Features :
 
     // Géometries :
+    // Feature :
+    private Feature[] arc_niv0 = new Feature[127];
+    private Feature[] arc_niv1 = new Feature[757];
+    private Feature[] arc_niv2 = new Feature[780];
+
+    // Geometries :
     private Geometry[] array_geom_niv0 = new Geometry[127];
     private Geometry[] array_geom_niv1_1 = new Geometry[380];
     private Geometry[] array_geom_niv1_2 = new Geometry[377];
@@ -184,7 +192,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
         // Spinner element pour changement etage
         Spinner spinner = (Spinner) findViewById(R.id.spinner1);
         // Spinner click listener pour changement etage
-        spinner.setOnItemSelectedListener(this);
+        spinner.setOnItemSelectedListener(new BoutonEtageListener());
 
         File tpk = new File(extern + tpkPath);
         Log.d("RoutingAndGeocoding", "Find tpk: " + tpk.exists());
@@ -227,7 +235,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
         Button qrButton = (Button) findViewById(R.id.scan_button);
         String qrTxt = getResources().getString(R.string.qr);
         qrButton.setText(qrTxt);
-        qrButton.setOnClickListener(this);
+        qrButton.setOnClickListener(new BoutonQRcodeListener());
 
         // Test stop selec :
         Button testButton = (Button) findViewById(R.id.test_button);
@@ -380,7 +388,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
 
                     // Récupération des magasins :
                     for(int v=0; v<=2; v++){
-
                         GeodatabaseFeatureTable mag = gdb.getGeodatabaseTables().get(v);
 
                         long nbr_lignes = mag.getNumberOfFeatures();
@@ -388,21 +395,15 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
                             if (v==0) {
                                 if (mag.checkFeatureExists(l)) {
                                     mag_niv0[l-1] = mag.getFeature(l);
-                                } else {
-                                    mag_niv0[l-1] = null;
-                                }
+                                } else {mag_niv0[l-1] = null;}
                             } else if (v==1) {
                                 if (mag.checkFeatureExists(l)) {
                                     mag_niv1[l-1] = mag.getFeature(l);
-                                } else {
-                                    mag_niv1[l-1] = null;
-                                }
+                                } else {mag_niv1[l-1] = null;}
                             } else if (v==2) {
                                 if (mag.checkFeatureExists(l)) {
                                     mag_niv2[l-1] = mag.getFeature(l);
-                                } else {
-                                    mag_niv2[l-1] = null;
-                                }
+                                } else {mag_niv2[l-1] = null;}
                             }
                         }
                     }
@@ -490,74 +491,11 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
         }).start();
     }
 
-    /**
-     * Définition des évenements :
-     */
-
-    @Override
-    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        // On selecting a spinner item
-        String etageSelec = parent.getItemAtPosition(position).toString();
-
-        // Showing selected spinner item
-        Toast.makeText(parent.getContext(), "Selected: " + etageSelec, Toast.LENGTH_LONG).show();
-
-        // On recupere les noms des etages qui sont stockés dans ressources.strings.values
-        String[] nom_etage = getResources().getStringArray(R.array.etage_array);
-
-        // Test suivant la selection de l'utilisateur:
-        if(etageSelec.equals(nom_etage[0])) {
-            etgsSelected = false;
-            etg0Selected = true;
-            etg1Selected = false;
-            etg2Selected = false;
-        }
-        if(etageSelec.equals(nom_etage[1])) {
-            etgsSelected = false;
-            etg0Selected = false;
-            etg1Selected = true;
-            etg2Selected = false;
-        }
-        if(etageSelec.equals(nom_etage[2])) {
-            etgsSelected = false;
-            etg0Selected = false;
-            etg1Selected = false;
-            etg2Selected = true;
-        }
-        if(etageSelec.equals(nom_etage[3])) {
-            etgsSelected = true;
-            etg0Selected = false;
-            etg1Selected = false;
-            etg2Selected = false;
-        }
-
-        mTileLayer.setVisible(etgsSelected);
-        mTileLayer0.setVisible(etg0Selected);
-        mTileLayer1.setVisible(etg1Selected);
-        mTileLayer2.setVisible(etg2Selected);
-
-        ////////////////////////////////////////////////////////////////////////////////////////////
-
-        // Gestion affichage au moment du changement d'étage :
-        afficherIti();
-    }
-    public void onNothingSelected(AdapterView<?> arg0) {
-        // TODO : Auto-generated method stub
-    }
-
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
      * Gestion des QR codes :
      */
-
-    @Override
-    public void onClick(View v) {
-        if(v.getId() == R.id.scan_button){
-            // On lance le scanner au clic sur notre bouton
-            new IntentIntegrator(this).initiateScan();
-        }
-    }
 
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
         // Nous utilisons la classe IntentIntegrator et sa fonction parseActivityResult pour parser le résultat du scan
@@ -900,6 +838,113 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
         }
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Listener du bouton de choissi d'étage :
+     */
+    class BoutonEtageListener implements OnItemSelectedListener {
+
+        /**
+         * Définition des évenements :
+         */
+
+        @Override
+        public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+            // On selecting a spinner item
+            String etageSelec = parent.getItemAtPosition(position).toString();
+
+            // Showing selected spinner item
+            Toast.makeText(parent.getContext(), "Selected: " + etageSelec, Toast.LENGTH_LONG).show();
+
+            // On recupere les noms des etages qui sont stockés dans ressources.strings.values
+            String[] nom_etage = getResources().getStringArray(R.array.etage_array);
+
+            // Test suivant la selection de l'utilisateur:
+            if (etageSelec.equals(nom_etage[0])) {
+                etgsSelected = false;
+                etg0Selected = true;
+                etg1Selected = false;
+                etg2Selected = false;
+            }
+            if (etageSelec.equals(nom_etage[1])) {
+                etgsSelected = false;
+                etg0Selected = false;
+                etg1Selected = true;
+                etg2Selected = false;
+            }
+            if (etageSelec.equals(nom_etage[2])) {
+                etgsSelected = false;
+                etg0Selected = false;
+                etg1Selected = false;
+                etg2Selected = true;
+            }
+            if (etageSelec.equals(nom_etage[3])) {
+                etgsSelected = true;
+                etg0Selected = false;
+                etg1Selected = false;
+                etg2Selected = false;
+            }
+
+            mTileLayer.setVisible(etgsSelected);
+            mTileLayer0.setVisible(etg0Selected);
+            mTileLayer1.setVisible(etg1Selected);
+            mTileLayer2.setVisible(etg2Selected);
+
+            ////////////////////////////////////////////////////////////////////////////////////////////
+
+            // Gestion affichage au moment du changement d'étage :
+            afficherIti();
+        }
+
+        public void onNothingSelected(AdapterView<?> arg0) {
+            // TODO : Auto-generated method stub
+        }
+    }
+
+    class BoutonQRcodeListener implements View.OnClickListener {
+
+        //QR code
+        @Override
+        public void onClick(View v) {
+            //QR code
+            if (v.getId() == R.id.scan_button) {
+                // on lance le scanner au clic sur notre bouton
+                IntentIntegrator integrator = new IntentIntegrator(MainActivity.this);
+                integrator.initiateScan();
+                //new IntentIntegrator(this).initiateScan();
+            }
+        }
+    }
+
+/**
+    class BoutonSaisieAutomatiqueListener implements AdapterView.OnItemClickListener {
+
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view,int position, long id) {
+            // On selectionne le magasin dans la liste de saisie automatique
+            String item = parent.getItemAtPosition(position).toString();
+
+            // On l'affiche sur l'ecran
+            Toast.makeText(parent.getContext(), "Selected: " + item, Toast.LENGTH_LONG).show();
+
+            Log.v("mag_selectionne",item);
+            // on parcourt la liste récupérer au début dans la geodatabase et on récupère la geometrie
+            // correspondant au magasin choisie par l'utilisateur
+            for (int s=0; s<lst_mag.size(); s++) {
+//
+                if (lst_mag.get(s).toString().equals(item)){
+                    //geo_dep = lst_geo.get(s);
+                    geo_depart = lst_geo.get(s);
+                    Log.v("depart", geo_depart.toString());
+                }
+                //if (lst_mag.get(s).toString().equals(mag_arr)){
+                //    geo_arr = lst_geo.get(s);
+                //}
+            }
+        }
+    }
+**/
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     private void popToast(final String message, final boolean show) {
