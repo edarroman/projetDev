@@ -32,9 +32,12 @@ import com.esri.android.map.MapView;
 import com.esri.android.map.TiledLayer;
 import com.esri.android.map.ags.ArcGISLocalTiledLayer;
 import com.esri.core.geodatabase.Geodatabase;
+import com.esri.core.geodatabase.GeodatabaseFeatureTable;
 import com.esri.core.geometry.Geometry;
+import com.esri.core.geometry.GeometryEngine;
 import com.esri.core.geometry.Point;
 import com.esri.core.geometry.SpatialReference;
+import com.esri.core.map.Feature;
 import com.esri.core.map.Graphic;
 import com.esri.core.symbol.SimpleLineSymbol;
 import com.esri.core.symbol.SimpleMarkerSymbol;
@@ -78,6 +81,41 @@ public class MainActivity extends AppCompatActivity {
     Object geo_dep;
     Object geo_arr;
 
+    // Définiton géométrie engine :
+    private GeometryEngine geomen = new GeometryEngine();
+
+    // Référence spatiale :
+    private SpatialReference WKID_RGF93 = SpatialReference.create(102110);
+
+    // Variables utiles pour la récupération des magasins :
+    // Features :
+    private Feature[] mag_niv0 = new Feature[12];
+    private Feature[] mag_niv1 = new Feature[66];
+    private Feature[] mag_niv2 = new Feature[64];
+    // Geometries :
+    private Geometry[] mag_niv0_geom = new Geometry[12];
+    private Geometry[] mag_niv1_geom = new Geometry[66];
+    private Geometry[] mag_niv2_geom = new Geometry[64];
+    // Geometries projetees :
+    private Geometry projection_mag_niv0 = null;
+    private Geometry projection_mag_niv1 = null;
+    private Geometry projection_mag_niv2 = null;
+    // Geometries d'un magasin :
+    private Geometry mag_niveau0 = null;
+    private Geometry mag_niveau1 = null;
+    private Geometry mag_niveau2 = null;
+    // Liste nom  :
+    private ArrayList lst_mag_niveau0 = new ArrayList();
+    private ArrayList lst_mag_niveau1 = new ArrayList();
+    private ArrayList lst_mag_niveau2 = new ArrayList();
+    // Liste type  :
+    private ArrayList lst_types_niveau0 = new ArrayList();
+    private ArrayList lst_types_niveau1 = new ArrayList();
+    private ArrayList lst_types_niveau2 = new ArrayList();
+    // Test
+    private Geometry pt_fnac = null;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -109,15 +147,51 @@ public class MainActivity extends AppCompatActivity {
             if (resultCode == RESULT_OK){
                 final String mag_dep = intent_req.getStringExtra("Depart");
                 final String mag_arr = intent_req.getStringExtra("Arrivee");
-                for (int s=0; s<lst_mag.size(); s++) {
-//
-                    if (lst_mag.get(s).toString().equals(mag_dep)){
-                        geo_dep = lst_geo.get(s);
-                    }
-                    if (lst_mag.get(s).toString().equals(mag_arr)){
-                       geo_arr = lst_geo.get(s);
+                final String niv_ar = intent_req.getStringExtra("Niv_ar");
+                final String niv_dep = intent_req.getStringExtra("Niv_dep");
+                if (niv_dep == "0") {
+                    for (int s = 0; s < lst_mag_niveau0.size(); s++) {
+                        if (lst_mag_niveau0.get(s).toString().equals(mag_dep)) {
+                            geo_dep = mag_niv0_geom[s];
+                        }
                     }
                 }
+                if (niv_dep == "1") {
+                    for (int s = 0; s < lst_mag_niveau1.size(); s++) {
+                        if (lst_mag_niveau1.get(s).toString().equals(mag_dep)) {
+                            geo_dep = mag_niv1_geom[s];
+                        }
+                    }
+                }
+                if (niv_dep == "2") {
+                    for (int s = 0; s < lst_mag_niveau2.size(); s++) {
+                        if (lst_mag_niveau2.get(s).toString().equals(mag_dep)) {
+                            geo_dep = mag_niv2_geom[s];
+                        }
+                    }
+                }
+                if (niv_ar == "0") {
+                    for (int s = 0; s < lst_mag_niveau0.size(); s++) {
+                        if (lst_mag_niveau0.get(s).toString().equals(mag_arr)) {
+                            geo_arr = mag_niv0_geom[s];
+                        }
+                    }
+                }
+                if (niv_ar == "1") {
+                    for (int s = 0; s < lst_mag_niveau1.size(); s++) {
+                        if (lst_mag_niveau1.get(s).toString().equals(mag_arr)) {
+                            geo_arr = mag_niv1_geom[s];
+                        }
+                    }
+                }
+                if (niv_ar == "2") {
+                    for (int s = 0; s < lst_mag_niveau2.size(); s++) {
+                        if (lst_mag_niveau2.get(s).toString().equals(mag_arr)) {
+                            geo_arr = mag_niv2_geom[s];
+                        }
+                    }
+                }
+
             }
         }
     }
@@ -137,18 +211,113 @@ public class MainActivity extends AppCompatActivity {
                     mRouteTask = RouteTask.createLocalRouteTask(extern + networkPath, networkName);
                     // open a local geodatabase
                     Geodatabase gdb = new Geodatabase(extern + networkPath);
-                   for(int i=0; i<=2; i++){
-                       long nbr_lignes = gdb.getGeodatabaseTables().get(i).getNumberOfFeatures();
-                       for(int l=1; l<=nbr_lignes; l++){
-                           Map<String, Object> lignes = gdb.getGeodatabaseTables().get(i).getFeature(l).getAttributes();
-                           Object geom = gdb.getGeodatabaseTables().get(i).getFeature(l).getGeometry();
-                           Object type = lignes.get("TYPE");
-                           Object nom_mag = lignes.get("NOM");
-                           lst_type.add(type.toString());
-                           lst_mag.add(nom_mag.toString());
-                           lst_geo.add(geom);
-                       }
-                   }
+
+                    ////////////////////////////////////////////////////////////////////////////////
+
+                    // Récupération des magasins :
+                    for(int v=0; v<=2; v++){
+
+                        GeodatabaseFeatureTable mag = gdb.getGeodatabaseTables().get(v);
+
+                        long nbr_lignes = mag.getNumberOfFeatures();
+                        for(int l=1; l<=nbr_lignes; l++){
+                            if (v==0) {
+                                if (mag.checkFeatureExists(l)) {
+                                    mag_niv0[l-1] = mag.getFeature(l);
+                                } else {
+                                    mag_niv0[l-1] = null;
+                                }
+                            } else if (v==1) {
+                                if (mag.checkFeatureExists(l)) {
+                                    mag_niv1[l-1] = mag.getFeature(l);
+                                } else {
+                                    mag_niv1[l-1] = null;
+                                }
+                            } else if (v==2) {
+                                if (mag.checkFeatureExists(l)) {
+                                    mag_niv2[l-1] = mag.getFeature(l);
+                                } else {
+                                    mag_niv2[l-1] = null;
+                                }
+                            }
+                        }
+                    }
+
+                    // Récupération de la référence spatiale :
+                    SpatialReference mapRef = mMapView.getSpatialReference();
+
+                    ////////////////////////////////////////////////////////////////////////////////
+
+                    // Récupération des géométries, noms type :
+                    // Etage 0
+                    int len0 = mag_niv0.length;
+                    for(int k=0; k<len0; k++) {
+
+                        Feature Mag =  mag_niv0[k];
+
+                        // Récupération géométrie :
+                        mag_niv0_geom[k] = mag_niv0[k].getGeometry();
+
+                        // Récupération nom et type :
+                        Map<String, Object> lignes = Mag.getAttributes();
+                        Object type = lignes.get("TYPE");
+                        Object nom_mag = lignes.get("NOM");
+                        lst_types_niveau0.add(type);
+                        lst_mag_niveau0.add(nom_mag);
+                    }
+
+                    // Etage 1
+                    int len1 = mag_niv1.length;
+                    for(int k=0; k<len1; k++) {
+
+                        Feature Mag =  mag_niv1[k];
+
+                        // Récupération géométrie :
+                        mag_niv1_geom[k] = mag_niv1[k].getGeometry();
+
+                        // Récupération nom et type :
+                        Map<String, Object> lignes = Mag.getAttributes();
+                        Object type = lignes.get("TYPE");
+                        Object nom_mag = lignes.get("NOM");
+                        lst_types_niveau1.add(type);
+                        lst_mag_niveau1.add(nom_mag);
+                    }
+
+                    // Etage 2
+                    int len2 = mag_niv0.length;
+                    for(int k=0; k<len2; k++) {
+
+                        Feature Mag =  mag_niv2[k];
+
+                        // Récupération géométrie :
+                        mag_niv2_geom[k] = mag_niv2[k].getGeometry();
+
+                        // Récupération nom et type :
+                        Map<String, Object> lignes = Mag.getAttributes();
+                        Object type = lignes.get("TYPE");
+                        Object nom_mag = lignes.get("NOM");
+                        lst_types_niveau2.add(type);
+                        lst_mag_niveau2.add(nom_mag);
+                    }
+
+                    ////////////////////////////////////////////////////////////////////////////////
+
+                    // Union des magasins :
+
+                    mag_niveau0 = geomen.union(mag_niv0_geom, WKID_RGF93);
+                    mag_niveau1 = geomen.union(mag_niv1_geom, WKID_RGF93);
+                    mag_niveau2 = geomen.union(mag_niv2_geom, WKID_RGF93);
+
+                    ////////////////////////////////////////////////////////////////////////////////
+
+                    // On projete les magasins en RGF93 :
+
+                    projection_mag_niv0 = geomen.project(mag_niveau0, WKID_RGF93, mapRef);
+                    projection_mag_niv1 = geomen.project(mag_niveau1, WKID_RGF93, mapRef);
+                    projection_mag_niv2 = geomen.project(mag_niveau2, WKID_RGF93, mapRef);
+
+                    ////////////////////////////////////////////////////////////////////////////////
+                    Log.d("1",""+lst_types_niveau1);
                 } catch (Exception e) {
                     popToast("Error while initializing :" + e.getMessage(), true);
                     e.printStackTrace();
@@ -271,10 +440,13 @@ public class MainActivity extends AppCompatActivity {
 
     private void choix(){
         Intent intent_choix = new Intent(MainActivity.this, Choix.class);
-        intent_choix.putExtra("Liste_mag", lst_mag);
-        intent_choix.putExtra("Liste_type", lst_type);
-        intent_choix.putExtra("mag_dep", "");
-        intent_choix.putExtra("mag_ar", "");
+        intent_choix.putExtra("Liste_mag0", lst_mag_niveau0);
+        intent_choix.putExtra("Liste_mag1", lst_mag_niveau1);
+        intent_choix.putExtra("Liste_mag2", lst_mag_niveau2);
+        intent_choix.putExtra("Liste_type0", lst_types_niveau0);
+        intent_choix.putExtra("Liste_type1", lst_types_niveau1);
+        intent_choix.putExtra("Liste_type2", lst_types_niveau2);
+
         startActivityForResult(intent_choix, 0);
     }
 
