@@ -61,4 +61,17 @@
         android:id="@+id/test_button"
         android:layout_centerHorizontal="true" />
 
+    <AutoCompleteTextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/nom_magasin"
+        android:layout_centerVertical="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:ems="10"
+        android:hint="Départ">
+        <requestFocus />
+
+    </AutoCompleteTextView>
+
 </RelativeLayout>

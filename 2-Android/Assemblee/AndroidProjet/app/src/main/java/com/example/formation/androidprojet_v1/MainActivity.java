@@ -12,6 +12,8 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.Spinner;
@@ -55,6 +57,7 @@ import com.google.zxing.integration.android.IntentResult;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
@@ -129,6 +132,7 @@ public class MainActivity extends Activity  {
 
     // Variables utiles pour la récupération des magasins :
     // Features :
+    private Feature[] mag_all = new Feature[142];
     private Feature[] mag_niv0 = new Feature[12];
     private Feature[] mag_niv1 = new Feature[66];
     private Feature[] mag_niv2 = new Feature[64];
@@ -180,6 +184,9 @@ public class MainActivity extends Activity  {
     private CheckBox checkBoxRes = null;
     private boolean estRestreint = false;
 
+    //Saisie auto :
+    List lst_nom_mag = new ArrayList();
+
     // Test :
     private Geometry depart;
 
@@ -228,7 +235,7 @@ public class MainActivity extends Activity  {
         checkBoxRes.setOnClickListener(checkedListener);
 
         // Initialize the RouteTask and Locator with the local data
-        initializeRoutingAndGeocoding();
+        accesBdd();
         mMapView.setOnTouchListener(new TouchListener(MainActivity.this, mMapView));
 
         // QR code
@@ -237,259 +244,22 @@ public class MainActivity extends Activity  {
         qrButton.setText(qrTxt);
         qrButton.setOnClickListener(new BoutonQRcodeListener());
 
+        // Saisie automatique
+        //final ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,android.R.layout.simple_dropdown_item_1line, lst_nom_mag);
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
+                android.R.layout.simple_dropdown_item_1line, lst_nom_mag);
+        //Log.d("lst_mag", "" + lst_nom_mag);
+        AutoCompleteTextView textView = (AutoCompleteTextView)
+                findViewById(R.id.nom_magasin);
+        textView.setAdapter(adapter);
+        textView.setThreshold(1); // on commence la recherche automatique dès la première lettre ecrite
+        textView.setOnItemClickListener(new BoutonSaisieAutomatiqueListener());
+
         // Test stop selec :
         Button testButton = (Button) findViewById(R.id.test_button);
         testButton.setOnClickListener(testListener);
     }
 
-    /**
-     * Initilialisation de l'itinéraire et du géocodage
-     */
-
-    private void initializeRoutingAndGeocoding() {
-
-        // We will spin off the initialization in a new thread
-        // Thread qui récupére les arcs de notre graphe
-        new Thread(new Runnable() {
-
-            @Override
-            public void run() {
-
-                // TODO : Modification automatique en fonction du type d'appareil (SD ou non)
-
-                // Get the external directory
-
-                // SdCard
-                String locatorPath = chTpk + "/Geocoding/MGRS.loc";
-                String networkPath = chTpk + "/Routing/base_de_donnees.geodatabase";
-
-
-                String networkName = "GRAPH_Final_ND";
-
-                // Attempt to load the local geocoding and routing data
-                try {
-                    mLocator = Locator.createLocalLocator(extern + locatorPath);
-                    mRouteTask = RouteTask.createLocalRouteTask(extern + networkPath, networkName);
-
-                    ////////////////////////////////////////////////////////////////////////////////
-
-                    // open a local geodatabase
-                    Geodatabase gdb = new Geodatabase(extern + networkPath);
-
-                    // On prend un point connu pour tester QR code, en utilisant un magasin existant
-                    // Ensuite on integrera directement les QR code dans la geodatabase
-                    // Il sera judicieux de l'integrer par Android pour éviter à l'utilisateur
-                    // programmeur de recréer la geodatabase
-
-                    // Magasin test : La grande recre
-                    geom_QR_code = gdb.getGeodatabaseTables().get(0).getFeature(1).getGeometry();
-
-                    ////////////////////////////////////////////////////////////////////////////////
-                    // Récupération de la référence spatiale :
-                    SpatialReference mapRef = mMapView.getSpatialReference();
-
-                    // TODO : un arc par niveau ? Gain temps et efficacité ?
-
-                    GeodatabaseFeatureTable tab_niv0 = gdb.getGeodatabaseTables().get(11);
-                    GeodatabaseFeatureTable tab_niv1 = gdb.getGeodatabaseTables().get(12);
-                    GeodatabaseFeatureTable tab_niv2 = gdb.getGeodatabaseTables().get(13);
-
-                    Log.d("tab1", tab_niv1.getTableName());
-
-                    // Récupération des arcs dans la géodatabase  :
-                    // Comme nous avons plus de 512 arcs sur les étages 1 et 2
-                    // Nous avons dû procéder en deux fois pour récupérer les arcs de ces étages
-
-                    // Définition du nombre d'arcs :
-                    int i = array_geom_niv0.length;
-                    int l1 = array_geom_niv1_1.length;
-                    int l2 = array_geom_niv1_2.length;
-                    int m1 = array_geom_niv2_1.length;
-                    int m2 = array_geom_niv2_2.length;
-
-                    Geometry poubelle = new Polyline(); // Varaible utile si pas d'objet dans la base
-
-                    // Etage 0 :
-                    for(int j=1; j<=i; j++){
-                        if (tab_niv0.checkFeatureExists(j)) {
-                            array_geom_niv0[j-1] = tab_niv0.getFeature(j,WKID_RGF93).getGeometry();
-                        } else {array_geom_niv0[j-1] = poubelle;}
-                    }
-
-                    // Etage 1_1 :
-                    for(int j=1; j<=l1; j++){
-                        if (tab_niv1.checkFeatureExists(j)) {
-                            array_geom_niv1_1[j-1] = tab_niv1.getFeature(j,WKID_RGF93).getGeometry();
-                        } else {array_geom_niv1_1[j-1] = poubelle;}
-                    }
-
-                    // Etage 1_2 :
-                    int k1 = 0;
-                    double longTot = 0;
-                    for(int j=l1+1; j<=l1+l2; j++){
-                        if (tab_niv1.checkFeatureExists(j)) {
-                            array_geom_niv1_2[k1] = tab_niv1.getFeature(j,WKID_RGF93).getGeometry();
-                        } else {array_geom_niv1_2[k1] = poubelle;}
-                        k1 = k1+1;
-                    }
-
-                    // Etage 2_1 :
-                    for(int j=1; j<=m1; j++){
-                        if (tab_niv2.checkFeatureExists(j)) {
-                            array_geom_niv2_1[j-1] = tab_niv2.getFeature(j,WKID_RGF93).getGeometry();
-                        } else {array_geom_niv2_1[j-1] = poubelle;}
-                    }
-
-                    // Etage 2_2 :
-                    int k2 = 0;
-                    for(int j=m1+1; j<=m1+m2; j++){
-                        if (tab_niv2.checkFeatureExists(j)) {
-                            array_geom_niv2_2[k2] = tab_niv2.getFeature(j,WKID_RGF93).getGeometry();
-                        } else {array_geom_niv2_2[k2] = poubelle;}
-                        k2 = k2+1;
-                    }
-
-                    ////////////////////////////////////////////////////////////////////////////////
-
-                    // Union des arcs :
-
-                    // Niveau 0:
-                    geometries_niveau0 = geomen.union(array_geom_niv0, WKID_RGF93);
-
-                    // Niveau 1 :
-                    array_geom_niv1[0] = geomen.union(array_geom_niv1_1, WKID_RGF93);
-                    array_geom_niv1[1] = geomen.union(array_geom_niv1_2, WKID_RGF93);
-                    geometries_niveau1 = geomen.union(array_geom_niv1, WKID_RGF93);
-
-                    // Niveau 2 :
-                    array_geom_niv2[0] = geomen.union(array_geom_niv2_1, WKID_RGF93);
-                    array_geom_niv2[1] = geomen.union(array_geom_niv2_2, WKID_RGF93);
-                    geometries_niveau2 = geomen.union(array_geom_niv2, WKID_RGF93);
-
-                    // logs :
-                    Log.d("geometries_niveau0", "" + geometries_niveau0.calculateLength2D());
-                    Log.d("geometries_niveau1", "" + geometries_niveau1.calculateLength2D());
-                    Log.d("geometries_niveau2", "" + geometries_niveau2.calculateLength2D());
-
-                    ////////////////////////////////////////////////////////////////////////////////
-
-                    // On projete les arcs en RGF93 :
-
-                    //geometries_niveau0 = geomen.union(array_geom_niv0, WKID_RGF93);
-                    projection_niv0 = geomen.project(geometries_niveau0, WKID_RGF93, mapRef);
-
-                    //geometries_niveau1 = geomen.union(array_geom_niv1, WKID_RGF93);
-                    projection_niv1 = geomen.project(geometries_niveau1, WKID_RGF93, mapRef);
-
-                    //geometries_niveau2 = geomen.union(array_geom_niv2, WKID_RGF93);
-                    projection_niv2 = geomen.project(geometries_niveau2, WKID_RGF93, mapRef);
-
-                    ////////////////////////////////////////////////////////////////////////////////
-
-                    // Récupération des magasins :
-                    for(int v=0; v<=2; v++){
-                        GeodatabaseFeatureTable mag = gdb.getGeodatabaseTables().get(v);
-
-                        long nbr_lignes = mag.getNumberOfFeatures();
-                        for(int l=1; l<=nbr_lignes; l++){
-                            if (v==0) {
-                                if (mag.checkFeatureExists(l)) {
-                                    mag_niv0[l-1] = mag.getFeature(l);
-                                } else {mag_niv0[l-1] = null;}
-                            } else if (v==1) {
-                                if (mag.checkFeatureExists(l)) {
-                                    mag_niv1[l-1] = mag.getFeature(l);
-                                } else {mag_niv1[l-1] = null;}
-                            } else if (v==2) {
-                                if (mag.checkFeatureExists(l)) {
-                                    mag_niv2[l-1] = mag.getFeature(l);
-                                } else {mag_niv2[l-1] = null;}
-                            }
-                        }
-                    }
-                    
-                    ////////////////////////////////////////////////////////////////////////////////
-
-                    // Récupération des géométries, noms type :
-                    // Etage 0
-                    int len0 = mag_niv0.length;
-                    for(int k=0; k<len0; k++) {
-
-                        Feature Mag =  mag_niv0[k];
-
-                        // Récupération géométrie :
-                        mag_niv0_geom[k] = mag_niv0[k].getGeometry();
-
-                        // Récupération nom et type :
-                        Map<String, Object> lignes = Mag.getAttributes();
-                        Object type = lignes.get("TYPE");
-                        Object nom_mag = lignes.get("NOM");
-                        lst_types_niveau0.add(type);
-                        lst_mag_niveau0.add(nom_mag);
-                    }
-
-                    // Etage 1
-                    int len1 = mag_niv1.length;
-                    for(int k=0; k<len1; k++) {
-
-                        Feature Mag =  mag_niv1[k];
-
-                        // Récupération géométrie :
-                        mag_niv1_geom[k] = mag_niv1[k].getGeometry();
-
-                        // Récupération nom et type :
-                        Map<String, Object> lignes = Mag.getAttributes();
-                        Object type = lignes.get("TYPE");
-                        Object nom_mag = lignes.get("NOM");
-                        lst_types_niveau1.add(type);
-                        lst_mag_niveau1.add(nom_mag);
-                    }
-
-                    // Etage 2
-                    int len2 = mag_niv0.length;
-                    for(int k=0; k<len2; k++) {
-
-                        Feature Mag =  mag_niv2[k];
-
-                        // Récupération géométrie :
-                        mag_niv2_geom[k] = mag_niv2[k].getGeometry();
-
-                        // Récupération nom et type :
-                        Map<String, Object> lignes = Mag.getAttributes();
-                        Object type = lignes.get("TYPE");
-                        Object nom_mag = lignes.get("NOM");
-                        lst_types_niveau2.add(type);
-                        lst_mag_niveau2.add(nom_mag);
-                    }
-
-                    ////////////////////////////////////////////////////////////////////////////////
-
-                    // Union des magasins :
-
-                    mag_niveau0 = geomen.union(mag_niv0_geom, WKID_RGF93);
-                    mag_niveau1 = geomen.union(mag_niv1_geom, WKID_RGF93);
-                    mag_niveau2 = geomen.union(mag_niv2_geom, WKID_RGF93);
-
-                    ////////////////////////////////////////////////////////////////////////////////
-
-                    // On projete les magasins en RGF93 :
-
-                    projection_mag_niv0 = geomen.project(mag_niveau0, WKID_RGF93, mapRef);
-                    projection_mag_niv1 = geomen.project(mag_niveau1, WKID_RGF93, mapRef);
-                    projection_mag_niv2 = geomen.project(mag_niveau2, WKID_RGF93, mapRef);
-
-                    ////////////////////////////////////////////////////////////////////////////////
-                    // Test :
-                    pt_fnac = gdb.getGeodatabaseTables().get(1).getFeature(35).getGeometry();
-
-
-                } catch (Exception e) {
-                    popToast("Error while initializing :" + e.getMessage(), true);
-                    e.printStackTrace();
-                }
-            }
-        }).start();
-    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -891,7 +661,7 @@ public class MainActivity extends Activity  {
             mTileLayer1.setVisible(etg1Selected);
             mTileLayer2.setVisible(etg2Selected);
 
-            ////////////////////////////////////////////////////////////////////////////////////////////
+            ////////////////////////////////////////////////////////////////////////////////////////
 
             // Gestion affichage au moment du changement d'étage :
             afficherIti();
@@ -901,6 +671,8 @@ public class MainActivity extends Activity  {
             // TODO : Auto-generated method stub
         }
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
 
     class BoutonQRcodeListener implements View.OnClickListener {
 
@@ -917,7 +689,8 @@ public class MainActivity extends Activity  {
         }
     }
 
-/**
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
     class BoutonSaisieAutomatiqueListener implements AdapterView.OnItemClickListener {
 
         @Override
@@ -931,20 +704,70 @@ public class MainActivity extends Activity  {
             Log.v("mag_selectionne",item);
             // on parcourt la liste récupérer au début dans la geodatabase et on récupère la geometrie
             // correspondant au magasin choisie par l'utilisateur
-            for (int s=0; s<lst_mag.size(); s++) {
-//
-                if (lst_mag.get(s).toString().equals(item)){
-                    //geo_dep = lst_geo.get(s);
-                    geo_depart = lst_geo.get(s);
-                    Log.v("depart", geo_depart.toString());
+
+            boolean trouve = false;
+
+            int len0 = mag_niv0.length;
+            for(int k=0; k<len0; k++) {
+                Feature Mag =  mag_niv0[k];
+                Map<String, Object> lignes = Mag.getAttributes();
+                Object nom_mag = lignes.get("NOM");
+                if(nom_mag.equals(item)){
+                    Geometry ptTest = mag_niv0[k].getGeometry();
+                    SpatialReference mapRef = mMapView.getSpatialReference();
+                    depart = geomen.project(ptTest, WKID_RGF93, mapRef);
+
+                    mGraphicsLayer.addGraphic(new Graphic(depart, new SimpleMarkerSymbol(Color.RED, 10, STYLE.CROSS)));
+
+                    StopGraphic stop = new StopGraphic(depart);
+                    mStops.addFeature(stop);
+
+                    trouve = true;
                 }
-                //if (lst_mag.get(s).toString().equals(mag_arr)){
-                //    geo_arr = lst_geo.get(s);
-                //}
+            }
+            if(!trouve){
+                int len1 = mag_niv1.length;
+                for(int k=0; k<len1; k++) {
+                    Feature Mag =  mag_niv1[k];
+                    Map<String, Object> lignes = Mag.getAttributes();
+                    Object nom_mag = lignes.get("NOM");
+                    if(nom_mag.equals(item)){
+                        Geometry ptTest = mag_niv1[k].getGeometry();
+                        SpatialReference mapRef = mMapView.getSpatialReference();
+                        depart = geomen.project(ptTest, WKID_RGF93, mapRef);
+
+                        mGraphicsLayer.addGraphic(new Graphic(depart, new SimpleMarkerSymbol(Color.RED, 10, STYLE.CROSS)));
+
+                        StopGraphic stop = new StopGraphic(depart);
+                        mStops.addFeature(stop);
+
+                        trouve = true;
+                    }
+                }
+            }
+            if(!trouve){
+                int len2 = mag_niv2.length;
+                for(int k=0; k<len2; k++) {
+                    Feature Mag =  mag_niv2[k];
+                    Map<String, Object> lignes = Mag.getAttributes();
+                    Object nom_mag = lignes.get("NOM");
+                    if(nom_mag.equals(item)){
+                        Geometry ptTest = mag_niv2[k].getGeometry();
+                        SpatialReference mapRef = mMapView.getSpatialReference();
+                        depart = geomen.project(ptTest, WKID_RGF93, mapRef);
+
+                        mGraphicsLayer.addGraphic(new Graphic(depart, new SimpleMarkerSymbol(Color.RED, 10, STYLE.CROSS)));
+
+                        StopGraphic stop = new StopGraphic(depart);
+                        mStops.addFeature(stop);
+
+                        trouve = true;
+                    }
+                }
             }
         }
     }
-**/
+
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     private void popToast(final String message, final boolean show) {
@@ -958,6 +781,246 @@ public class MainActivity extends Activity  {
                 Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void accesBdd(){
+        // TODO : Modification automatique en fonction du type d'appareil (SD ou non)
+
+        // Get the external directory
+
+        // SdCard
+        String locatorPath = chTpk + "/Geocoding/MGRS.loc";
+        String networkPath = chTpk + "/Routing/base_de_donnees.geodatabase";
+
+
+        String networkName = "GRAPH_Final_ND";
+
+        // Attempt to load the local geocoding and routing data
+        try {
+            mLocator = Locator.createLocalLocator(extern + locatorPath);
+            mRouteTask = RouteTask.createLocalRouteTask(extern + networkPath, networkName);
+
+            ////////////////////////////////////////////////////////////////////////////////
+
+            // open a local geodatabase
+            Geodatabase gdb = new Geodatabase(extern + networkPath);
+
+            // On prend un point connu pour tester QR code, en utilisant un magasin existant
+            // Ensuite on integrera directement les QR code dans la geodatabase
+            // Il sera judicieux de l'integrer par Android pour éviter à l'utilisateur
+            // programmeur de recréer la geodatabase
+
+            // Magasin test : La grande recre
+            geom_QR_code = gdb.getGeodatabaseTables().get(0).getFeature(1).getGeometry();
+
+            ////////////////////////////////////////////////////////////////////////////////
+            // Récupération de la référence spatiale :
+            SpatialReference mapRef = mMapView.getSpatialReference();
+
+            // TODO : un arc par niveau ? Gain temps et efficacité ?
+
+            GeodatabaseFeatureTable tab_niv0 = gdb.getGeodatabaseTables().get(11);
+            GeodatabaseFeatureTable tab_niv1 = gdb.getGeodatabaseTables().get(12);
+            GeodatabaseFeatureTable tab_niv2 = gdb.getGeodatabaseTables().get(13);
+
+            Log.d("tab1", tab_niv1.getTableName());
+
+            // Récupération des arcs dans la géodatabase  :
+            // Comme nous avons plus de 512 arcs sur les étages 1 et 2
+            // Nous avons dû procéder en deux fois pour récupérer les arcs de ces étages
+
+            // Définition du nombre d'arcs :
+            int i = array_geom_niv0.length;
+            int l1 = array_geom_niv1_1.length;
+            int l2 = array_geom_niv1_2.length;
+            int m1 = array_geom_niv2_1.length;
+            int m2 = array_geom_niv2_2.length;
+
+            Geometry poubelle = new Polyline(); // Varaible utile si pas d'objet dans la base
+
+            // Etage 0 :
+            for(int j=1; j<=i; j++){
+                if (tab_niv0.checkFeatureExists(j)) {
+                    array_geom_niv0[j-1] = tab_niv0.getFeature(j,WKID_RGF93).getGeometry();
+                } else {array_geom_niv0[j-1] = poubelle;}
+            }
+
+            // Etage 1_1 :
+            for(int j=1; j<=l1; j++){
+                if (tab_niv1.checkFeatureExists(j)) {
+                    array_geom_niv1_1[j-1] = tab_niv1.getFeature(j,WKID_RGF93).getGeometry();
+                } else {array_geom_niv1_1[j-1] = poubelle;}
+            }
+
+            // Etage 1_2 :
+            int k1 = 0;
+            double longTot = 0;
+            for(int j=l1+1; j<=l1+l2; j++){
+                if (tab_niv1.checkFeatureExists(j)) {
+                    array_geom_niv1_2[k1] = tab_niv1.getFeature(j,WKID_RGF93).getGeometry();
+                } else {array_geom_niv1_2[k1] = poubelle;}
+                k1 = k1+1;
+            }
+
+            // Etage 2_1 :
+            for(int j=1; j<=m1; j++){
+                if (tab_niv2.checkFeatureExists(j)) {
+                    array_geom_niv2_1[j-1] = tab_niv2.getFeature(j,WKID_RGF93).getGeometry();
+                } else {array_geom_niv2_1[j-1] = poubelle;}
+            }
+
+            // Etage 2_2 :
+            int k2 = 0;
+            for(int j=m1+1; j<=m1+m2; j++){
+                if (tab_niv2.checkFeatureExists(j)) {
+                    array_geom_niv2_2[k2] = tab_niv2.getFeature(j,WKID_RGF93).getGeometry();
+                } else {array_geom_niv2_2[k2] = poubelle;}
+                k2 = k2+1;
+            }
+
+            ////////////////////////////////////////////////////////////////////////////////
+
+            // Union des arcs :
+
+            // Niveau 0:
+            geometries_niveau0 = geomen.union(array_geom_niv0, WKID_RGF93);
+
+            // Niveau 1 :
+            array_geom_niv1[0] = geomen.union(array_geom_niv1_1, WKID_RGF93);
+            array_geom_niv1[1] = geomen.union(array_geom_niv1_2, WKID_RGF93);
+            geometries_niveau1 = geomen.union(array_geom_niv1, WKID_RGF93);
+
+            // Niveau 2 :
+            array_geom_niv2[0] = geomen.union(array_geom_niv2_1, WKID_RGF93);
+            array_geom_niv2[1] = geomen.union(array_geom_niv2_2, WKID_RGF93);
+            geometries_niveau2 = geomen.union(array_geom_niv2, WKID_RGF93);
+
+            // logs :
+            Log.d("geometries_niveau0", "" + geometries_niveau0.calculateLength2D());
+            Log.d("geometries_niveau1", "" + geometries_niveau1.calculateLength2D());
+            Log.d("geometries_niveau2", "" + geometries_niveau2.calculateLength2D());
+
+            ////////////////////////////////////////////////////////////////////////////////
+
+            // On projete les arcs en RGF93 :
+
+            //geometries_niveau0 = geomen.union(array_geom_niv0, WKID_RGF93);
+            projection_niv0 = geomen.project(geometries_niveau0, WKID_RGF93, mapRef);
+
+            //geometries_niveau1 = geomen.union(array_geom_niv1, WKID_RGF93);
+            projection_niv1 = geomen.project(geometries_niveau1, WKID_RGF93, mapRef);
+
+            //geometries_niveau2 = geomen.union(array_geom_niv2, WKID_RGF93);
+            projection_niv2 = geomen.project(geometries_niveau2, WKID_RGF93, mapRef);
+
+            ////////////////////////////////////////////////////////////////////////////////
+
+            // Récupération des magasins :
+            for(int v=0; v<=2; v++){
+                GeodatabaseFeatureTable mag = gdb.getGeodatabaseTables().get(v);
+
+                long nbr_lignes = mag.getNumberOfFeatures();
+                for(int l=1; l<=nbr_lignes; l++){
+                    if (v==0) {
+                        if (mag.checkFeatureExists(l)) {
+                            mag_niv0[l-1] = mag.getFeature(l);
+                        } else {mag_niv0[l-1] = null;}
+                    } else if (v==1) {
+                        if (mag.checkFeatureExists(l)) {
+                            mag_niv1[l-1] = mag.getFeature(l);
+                        } else {mag_niv1[l-1] = null;}
+                    } else if (v==2) {
+                        if (mag.checkFeatureExists(l)) {
+                            mag_niv2[l-1] = mag.getFeature(l);
+                        } else {mag_niv2[l-1] = null;}
+                    }
+                }
+            }
+
+            ////////////////////////////////////////////////////////////////////////////////
+
+            // Récupération des géométries, noms type :
+            // Etage 0
+            int len0 = mag_niv0.length;
+            for(int k=0; k<len0; k++) {
+
+                Feature Mag =  mag_niv0[k];
+
+                // Récupération géométrie :
+                mag_niv0_geom[k] = mag_niv0[k].getGeometry();
+
+                // Récupération nom et type :
+                Map<String, Object> lignes = Mag.getAttributes();
+                Object type = lignes.get("TYPE");
+                Object nom_mag = lignes.get("NOM");
+                lst_types_niveau0.add(type);
+                lst_mag_niveau0.add(nom_mag);
+                lst_nom_mag.add(nom_mag);
+            }
+
+            // Etage 1
+            int len1 = mag_niv1.length;
+            for(int k=0; k<len1; k++) {
+
+                Feature Mag =  mag_niv1[k];
+
+                // Récupération géométrie :
+                mag_niv1_geom[k] = mag_niv1[k].getGeometry();
+
+                // Récupération nom et type :
+                Map<String, Object> lignes = Mag.getAttributes();
+                Object type = lignes.get("TYPE");
+                Object nom_mag = lignes.get("NOM");
+                lst_types_niveau1.add(type);
+                lst_mag_niveau1.add(nom_mag);
+                lst_nom_mag.add(nom_mag);
+            }
+
+            // Etage 2
+            int len2 = mag_niv0.length;
+            for(int k=0; k<len2; k++) {
+
+                Feature Mag =  mag_niv2[k];
+
+                // Récupération géométrie :
+                mag_niv2_geom[k] = mag_niv2[k].getGeometry();
+
+                // Récupération nom et type :
+                Map<String, Object> lignes = Mag.getAttributes();
+                Object type = lignes.get("TYPE");
+                Object nom_mag = lignes.get("NOM");
+                lst_types_niveau2.add(type);
+                lst_mag_niveau2.add(nom_mag);
+                lst_nom_mag.add(nom_mag);
+            }
+
+            ////////////////////////////////////////////////////////////////////////////////
+
+            // Union des magasins :
+
+            mag_niveau0 = geomen.union(mag_niv0_geom, WKID_RGF93);
+            mag_niveau1 = geomen.union(mag_niv1_geom, WKID_RGF93);
+            mag_niveau2 = geomen.union(mag_niv2_geom, WKID_RGF93);
+
+            ////////////////////////////////////////////////////////////////////////////////
+
+            // On projete les magasins en RGF93 :
+
+            projection_mag_niv0 = geomen.project(mag_niveau0, WKID_RGF93, mapRef);
+            projection_mag_niv1 = geomen.project(mag_niveau1, WKID_RGF93, mapRef);
+            projection_mag_niv2 = geomen.project(mag_niveau2, WKID_RGF93, mapRef);
+
+            ////////////////////////////////////////////////////////////////////////////////
+            // Test :
+            pt_fnac = gdb.getGeodatabaseTables().get(1).getFeature(35).getGeometry();
+
+
+        } catch (Exception e) {
+            popToast("Error while initializing :" + e.getMessage(), true);
+            e.printStackTrace();
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
