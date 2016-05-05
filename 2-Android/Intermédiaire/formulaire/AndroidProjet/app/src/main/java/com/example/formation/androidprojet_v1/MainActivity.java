@@ -54,12 +54,12 @@ public class MainActivity extends AppCompatActivity {
 
     // Define ArcGIS Elements
     MapView mMapView;
-    //final String extern = "/mnt/ext_card";
+    final String extern = "/mnt/ext_card";
     //Hervé final String tpkPath = "/ArcGIS/samples/OfflineRouting/SanDiego.tpk";
     //final String tpkPath = "/Herve/ArcGIS/test_Forca.tpk";
-    //final String tpkPath = "/ProjetArcades/ArcGIS/niveau_1.tpk";
-    private final String extern = Environment.getExternalStorageDirectory().getPath();
-    final String tpkPath = "/ProjArcades/ArcGIS/niveau_1.tpk";
+    final String tpkPath = "/ProjetArcades/ArcGIS/niveau_1.tpk";
+    //private final String extern = Environment.getExternalStorageDirectory().getPath();
+    //final String tpkPath = "/ProjArcades/ArcGIS/niveau_1.tpk";
 
 
     TiledLayer mTileLayer = new ArcGISLocalTiledLayer(extern + tpkPath);
@@ -103,14 +103,33 @@ public class MainActivity extends AppCompatActivity {
         mMapView.setOnTouchListener(new TouchListener(MainActivity.this, mMapView));
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent intent_req) {
+        if (requestCode == 0) {
+            if (resultCode == RESULT_OK){
+                final String mag_dep = intent_req.getStringExtra("Depart");
+                final String mag_arr = intent_req.getStringExtra("Arrivee");
+                for (int s=0; s<lst_mag.size(); s++) {
+//
+                    if (lst_mag.get(s).toString().equals(mag_dep)){
+                        geo_dep = lst_geo.get(s);
+                    }
+                    if (lst_mag.get(s).toString().equals(mag_arr)){
+                       geo_arr = lst_geo.get(s);
+                    }
+                }
+            }
+        }
+    }
+
     private void initializeRoutingAndGeocoding() {
         // We will spin off the initialization in a new thread
         new Thread(new Runnable() {
             @Override
             public void run() {
                 // Get the external directory
-                String locatorPath = "/ProjArcades/ArcGIS/Geocoding/MGRS.loc";
-                String networkPath = "/ProjArcades/ArcGIS/Routing/base_de_donnees.geodatabase";
+                String locatorPath = "/ProjetArcades/ArcGIS/Geocoding/MGRS.loc";
+                String networkPath = "/ProjetArcades/ArcGIS/Routing/base_de_donnees.geodatabase";
                 String networkName = "GRAPH_Final_ND";
                 // Attempt to load the local geocoding and routing data
                 try {
@@ -255,37 +274,10 @@ public class MainActivity extends AppCompatActivity {
         intent_choix.putExtra("Liste_mag", lst_mag);
         intent_choix.putExtra("Liste_type", lst_type);
         intent_choix.putExtra("mag_dep", "");
-        intent_choix.putExtra("mag_ar","");
-        startActivityForResult(intent_choix, request_code);
+        intent_choix.putExtra("mag_ar", "");
+        startActivityForResult(intent_choix, 0);
     }
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent intent_req) {
-        //resultCode =-1;
-        //intent_req = getIntent();
-        Log.d("data", "i : " + intent_req + " reqCode : " + requestCode +  " resCode : "  + resultCode + " resCodeOK : " + RESULT_OK);
-        //Log.d("dep", "" + intent_req.getStringExtra("Depart"));
-        if (requestCode == request_code) {
-            if (resultCode == RESULT_OK){
-                //final String mag_dep = data.getStringExtra("Depart");
-                //final String mag_arr = data.getStringExtra("Arivee");
-                //int i =0, j=0;
-                //for (int s=0; s<lst_mag.size(); s++) {
-//
-                //    if (lst_mag.get(s).toString().equals(mag_dep)){
-                //        geo_dep = lst_geo.get(s);
-                //        i = i+1;
-                //    }
-                //    if (lst_mag.get(s).toString().equals(mag_arr)){
-                //       geo_arr = lst_geo.get(s);
-                //        j=j+1;
-                //    }
-                //}
-                //Log.d("!!!!!!","dep:  "+geo_dep+" arr: "+geo_arr);
-                //Log.d("!i",""+i);
-                //Log.d("!j",""+j);
-            }
-        }
-    }//onActivityResult
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {

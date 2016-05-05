@@ -26,19 +26,12 @@ public class Listetype extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.listetype);
-        String m ="";
+
         List lst_types = new Vector();
         Intent intent_type = getIntent();
         final ArrayList lstmag = intent_type.getStringArrayListExtra("Liste_mag");
         final ArrayList lsttype = intent_type.getStringArrayListExtra("Liste_type");
-        final String choix = intent_type.getStringExtra("choix");
-        if (choix.equals("0")){
-            m = "mag_ar";
-        }
-        if (choix.equals("1")){
-            m = "mag_dep";
-        }
-        final String mag = intent_type.getStringExtra(m);
+
         for (int s=0; s<lsttype.size(); s++) {
             Object t = lsttype.get(s);
             if (!lst_types.contains(t)) {
@@ -61,12 +54,20 @@ public class Listetype extends Activity {
                 intent.putExtra("type", type.toString());
                 intent.putExtra("Liste_mag", lstmag);
                 intent.putExtra("Liste_type", lsttype);
-                intent.putExtra("choix", choix);
-                intent.putExtra("mag", mag);
-                startActivity(intent);
-                finish();
+                startActivityForResult(intent, 1);
             }
         });
+    }
+    protected void onActivityResult(int requestCode, int resultCode, Intent intent_req) {
+        if (String.valueOf(requestCode)==String.valueOf(1)) {
+            if (String.valueOf(resultCode)==String.valueOf(RESULT_OK)) {
+                Intent intent = new Intent(Listetype.this, Choix.class);
+                intent.putExtra("mag", intent_req.getStringExtra("mag"));
+                setResult(RESULT_OK, intent);
+                finish();
+            }
+        }
+
     }
 
 }

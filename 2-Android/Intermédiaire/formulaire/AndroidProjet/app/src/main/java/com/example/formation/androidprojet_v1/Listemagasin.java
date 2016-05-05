@@ -33,8 +33,6 @@ public class Listemagasin extends Activity {
         Intent intent_magasin = getIntent();
         final ArrayList lstmag = intent_magasin.getStringArrayListExtra("Liste_mag");
         final ArrayList lsttype = intent_magasin.getStringArrayListExtra("Liste_type");
-        final String choix = intent_magasin.getStringExtra("choix");
-        final String mag = intent_magasin.getStringExtra("mag");
         String Type = intent_magasin.getStringExtra("type");
 
         for (int s=0; s<lsttype.size(); s++) {
@@ -53,35 +51,13 @@ public class Listemagasin extends Activity {
     maliste.setOnItemClickListener(new AdapterView.OnItemClickListener() {
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
             Object magasin = liste_magasin.get(position);
-            Intent intent = new Intent(Listemagasin.this, Choix.class);
-            if(choix.equals("0")) {
-                intent.putExtra("mag_dep", magasin.toString());
-                intent.putExtra("mag_ar", mag);
-            }
-            if(choix.equals("1")) {
-                intent.putExtra("mag_ar", magasin.toString());
-                intent.putExtra("mag_dep", mag);
-            }
-            intent.putExtra("Liste_mag", lstmag);
-            intent.putExtra("Liste_type", lsttype);
-
-            startActivity(intent);
+            Intent intent = new Intent(Listemagasin.this, Listetype.class);
+            intent.putExtra("mag", magasin.toString());
+            setResult(RESULT_OK, intent);
             finish();
         }
     });
     }
 
-    private void popToast(final String message, final boolean show) {
-        // Simple helper method for showing toast on the main thread
-        if (!show)
-            return;
-
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                Toast.makeText(Listemagasin.this, message, Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
 
 }

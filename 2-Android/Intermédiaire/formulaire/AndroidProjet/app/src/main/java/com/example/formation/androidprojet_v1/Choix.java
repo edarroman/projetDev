@@ -13,6 +13,10 @@ import java.util.ArrayList;
  * Created by formation on 13/04/2016.
  */
 public class Choix extends Activity {
+    Button arrivee;
+    Button depart;
+    String mag_dep;
+    String mag_ar;
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -24,19 +28,13 @@ public class Choix extends Activity {
 
         final String magasin = intent_choix.getStringExtra("mag_dep");
 
-        Button depart = (Button) findViewById(R.id.depart);
-        depart.setText(magasin);
+        depart = (Button) findViewById(R.id.depart);
 
         final String magasin_arrivee = intent_choix.getStringExtra("mag_ar");
-        Log.d("", " " + magasin_arrivee);
 
-        Button arrivee = (Button) findViewById(R.id.arrivee);
+        arrivee = (Button) findViewById(R.id.arrivee);
 
-        arrivee.setText(magasin_arrivee);
-
-
-            Log.d("!!",""+magasin_arrivee.isEmpty());
-
+        Log.d("mag",""+mag_dep+" "+mag_ar);
 
         Button ok = (Button) findViewById(R.id.ok);
         ok.setText("OK");
@@ -46,14 +44,10 @@ public class Choix extends Activity {
             public void onClick(View v) {
 
                 Intent intent_type = new Intent(Choix.this, Listetype.class);
-                final String choix = "0";
                 intent_type.putExtra("Liste_mag", lst_mag);
                 intent_type.putExtra("Liste_type", lst_type);
-                intent_type.putExtra("mag_ar", magasin_arrivee);
-                intent_type.putExtra("choix", choix);
+                startActivityForResult(intent_type, 3);
 
-                startActivity(intent_type);
-                finish();
             }
         });
 
@@ -63,35 +57,40 @@ public class Choix extends Activity {
             @Override
             public void onClick(View v) {
                 Intent intent_type = new Intent(Choix.this, Listetype.class);
-                final String choix="1";
                 intent_type.putExtra("Liste_mag", lst_mag);
                 intent_type.putExtra("Liste_type", lst_type);
-                intent_type.putExtra("mag_dep", magasin);
-                intent_type.putExtra("choix", choix);
-                startActivity(intent_type);
-                finish();
+                startActivityForResult(intent_type, 2);
             }
         });
 
         ok.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
-                if (magasin==null || magasin_arrivee == null){
-                    Log.d("coucou","");
-                }
-                if (!magasin.isEmpty()&& !magasin_arrivee.isEmpty() ){
+                if (mag_dep!= null&& mag_ar!=null ){
                     Intent intent_req = new Intent(Choix.this, MainActivity.class);
-                    intent_req.putExtra("Depart", magasin);
-                    intent_req.putExtra("Arrivee", magasin_arrivee);
-                    Log.d("dep", ""+intent_req.getStringExtra("Depart"));
-                    Log.d("r",""+RESULT_OK);
-                    setResult(0, intent_req);
+                    intent_req.putExtra("Depart", mag_dep);
+                    intent_req.putExtra("Arrivee", mag_ar);
+                    setResult(RESULT_OK, intent_req);
                     finish();
-
                 }
             }
 
         });
+
+    }
+    protected void onActivityResult(int requestCode, int resultCode, Intent intent_req) {
+        if (String.valueOf(requestCode)==String.valueOf(2)) {
+            if (String.valueOf(resultCode) == String.valueOf(RESULT_OK)) {
+                arrivee.setText(intent_req.getStringExtra("mag"));
+                mag_ar = intent_req.getStringExtra("mag");
+            }
+        }
+        if (String.valueOf(requestCode)==String.valueOf(3)) {
+            if (String.valueOf(resultCode) == String.valueOf(RESULT_OK)) {
+                depart.setText(intent_req.getStringExtra("mag"));
+                mag_dep = intent_req.getStringExtra("mag");
+            }
+        }
 
     }
 
