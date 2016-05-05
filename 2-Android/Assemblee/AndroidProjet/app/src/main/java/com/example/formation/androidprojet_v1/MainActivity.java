@@ -28,14 +28,19 @@ import com.esri.core.geodatabase.Geodatabase;
 import com.esri.core.geodatabase.GeodatabaseFeatureTable;
 import com.esri.core.geometry.Geometry;
 import com.esri.core.geometry.GeometryEngine;
+import com.esri.core.geometry.LinearUnit;
 import com.esri.core.geometry.Point;
+import com.esri.core.geometry.Polygon;
 import com.esri.core.geometry.Polyline;
 import com.esri.core.geometry.SpatialReference;
+import com.esri.core.geometry.Unit;
+import com.esri.core.map.Feature;
 import com.esri.core.map.Graphic;
 import com.esri.core.symbol.PictureMarkerSymbol;
 import com.esri.core.symbol.SimpleLineSymbol;
 import com.esri.core.symbol.SimpleMarkerSymbol;
 import com.esri.core.symbol.SimpleMarkerSymbol.STYLE;
+import com.esri.core.symbol.TextSymbol;
 import com.esri.core.table.TableException;
 import com.esri.core.tasks.geocode.Locator;
 import com.esri.core.tasks.geocode.LocatorReverseGeocodeResult;
@@ -50,29 +55,10 @@ import com.google.zxing.integration.android.IntentResult;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.List;
+import java.util.Map;
+import java.util.Vector;
 
-// TODO en fonction carte sd ou non changer chemin (Fonction à coder) :
-
-/*
-
-// SD card :
-
-private final String chTpk = "/ProjArcades/ArcGIS/";
-
-String locatorPath = "/ProjArcades/ArcGIS/Geocoding/MGRS.loc";
-String networkPath = "/ProjArcades/ArcGIS/Routing/base_de_donnees.geodatabase";
-String networkName = "GRAPH_Final_ND";
-
-OU
-
-// Autre :
-private final String chTpk = "/Android/data/com.example.formation.androidprojet_v1/ArcGIS/";
-
-String locatorPath = "/Android/data/com.example.formation.androidprojet_v1/ArcGIS/Geocoding/MGRS.loc";
-String networkPath = "/Android/data/com.example.formation.androidprojet_v1/ArcGIS/Routing/base_de_donnees.geodatabase";
-String networkName = "GRAPH_Final_ND";
-
-*/
 
 public class MainActivity extends Activity implements OnItemSelectedListener, View.OnClickListener {
 
@@ -140,7 +126,38 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
     // Référence spatiale :
     private SpatialReference WKID_RGF93 = SpatialReference.create(102110);
 
+    // Variables utiles pour la récupération des magasins :
+    // Features :
+    private Feature[] mag_niv0 = new Feature[12];
+    private Feature[] mag_niv1 = new Feature[66];
+    private Feature[] mag_niv2 = new Feature[64];
+    // Geometries :
+    private Geometry[] mag_niv0_geom = new Geometry[12];
+    private Geometry[] mag_niv1_geom = new Geometry[66];
+    private Geometry[] mag_niv2_geom = new Geometry[64];
+    // Geometries projetees :
+    private Geometry projection_mag_niv0 = null;
+    private Geometry projection_mag_niv1 = null;
+    private Geometry projection_mag_niv2 = null;
+    // Geometries d'un magasin :
+    private Geometry mag_niveau0 = null;
+    private Geometry mag_niveau1 = null;
+    private Geometry mag_niveau2 = null;
+    // Liste nom  :
+    private List lst_mag_niveau0 = new Vector();
+    private List lst_mag_niveau1 = new Vector();
+    private List lst_mag_niveau2 = new Vector();
+    // Liste type  :
+    private List lst_types_niveau0 = new Vector();
+    private List lst_types_niveau1 = new Vector();
+    private List lst_types_niveau2 = new Vector();
+    // Test
+    private Geometry pt_fnac = null;
+
     // Variables utiles à la récupérations des arcs :
+    // Features :
+
+    // Géometries :
     private Geometry[] array_geom_niv0 = new Geometry[127];
     private Geometry[] array_geom_niv1_1 = new Geometry[380];
     private Geometry[] array_geom_niv1_2 = new Geometry[377];
@@ -225,6 +242,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
     private void initializeRoutingAndGeocoding() {
 
         // We will spin off the initialization in a new thread
+        // Thread qui récupére les arcs de notre graphe
         new Thread(new Runnable() {
 
             @Override
@@ -260,6 +278,8 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
                     geom_QR_code = gdb.getGeodatabaseTables().get(0).getFeature(1).getGeometry();
 
                     ////////////////////////////////////////////////////////////////////////////////
+                    // Récupération de la référence spatiale :
+                    SpatialReference mapRef = mMapView.getSpatialReference();
 
                     // TODO : un arc par niveau ? Gain temps et efficacité ?
 
@@ -343,6 +363,124 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
                     Log.d("geometries_niveau0", "" + geometries_niveau0.calculateLength2D());
                     Log.d("geometries_niveau1", "" + geometries_niveau1.calculateLength2D());
                     Log.d("geometries_niveau2", "" + geometries_niveau2.calculateLength2D());
+
+                    ////////////////////////////////////////////////////////////////////////////////
+
+                    // On projete les arcs en RGF93 :
+
+                    //geometries_niveau0 = geomen.union(array_geom_niv0, WKID_RGF93);
+                    projection_niv0 = geomen.project(geometries_niveau0, WKID_RGF93, mapRef);
+
+                    //geometries_niveau1 = geomen.union(array_geom_niv1, WKID_RGF93);
+                    projection_niv1 = geomen.project(geometries_niveau1, WKID_RGF93, mapRef);
+
+                    //geometries_niveau2 = geomen.union(array_geom_niv2, WKID_RGF93);
+                    projection_niv2 = geomen.project(geometries_niveau2, WKID_RGF93, mapRef);
+
+                    ////////////////////////////////////////////////////////////////////////////////
+
+                    // Récupération des magasins :
+                    for(int v=0; v<=2; v++){
+
+                        GeodatabaseFeatureTable mag = gdb.getGeodatabaseTables().get(v);
+
+                        long nbr_lignes = mag.getNumberOfFeatures();
+                        for(int l=1; l<=nbr_lignes; l++){
+                            if (v==0) {
+                                if (mag.checkFeatureExists(l)) {
+                                    mag_niv0[l-1] = mag.getFeature(l);
+                                } else {
+                                    mag_niv0[l-1] = null;
+                                }
+                            } else if (v==1) {
+                                if (mag.checkFeatureExists(l)) {
+                                    mag_niv1[l-1] = mag.getFeature(l);
+                                } else {
+                                    mag_niv1[l-1] = null;
+                                }
+                            } else if (v==2) {
+                                if (mag.checkFeatureExists(l)) {
+                                    mag_niv2[l-1] = mag.getFeature(l);
+                                } else {
+                                    mag_niv2[l-1] = null;
+                                }
+                            }
+                        }
+                    }
+                    
+                    ////////////////////////////////////////////////////////////////////////////////
+
+                    // Récupération des géométries, noms type :
+                    // Etage 0
+                    int len0 = mag_niv0.length;
+                    for(int k=0; k<len0; k++) {
+
+                        Feature Mag =  mag_niv0[k];
+
+                        // Récupération géométrie :
+                        mag_niv0_geom[k] = mag_niv0[k].getGeometry();
+
+                        // Récupération nom et type :
+                        Map<String, Object> lignes = Mag.getAttributes();
+                        Object type = lignes.get("TYPE");
+                        Object nom_mag = lignes.get("NOM");
+                        lst_types_niveau0.add(type);
+                        lst_mag_niveau0.add(nom_mag);
+                    }
+
+                    // Etage 1
+                    int len1 = mag_niv1.length;
+                    for(int k=0; k<len1; k++) {
+
+                        Feature Mag =  mag_niv1[k];
+
+                        // Récupération géométrie :
+                        mag_niv1_geom[k] = mag_niv1[k].getGeometry();
+
+                        // Récupération nom et type :
+                        Map<String, Object> lignes = Mag.getAttributes();
+                        Object type = lignes.get("TYPE");
+                        Object nom_mag = lignes.get("NOM");
+                        lst_types_niveau1.add(type);
+                        lst_mag_niveau1.add(nom_mag);
+                    }
+
+                    // Etage 2
+                    int len2 = mag_niv0.length;
+                    for(int k=0; k<len2; k++) {
+
+                        Feature Mag =  mag_niv2[k];
+
+                        // Récupération géométrie :
+                        mag_niv2_geom[k] = mag_niv2[k].getGeometry();
+
+                        // Récupération nom et type :
+                        Map<String, Object> lignes = Mag.getAttributes();
+                        Object type = lignes.get("TYPE");
+                        Object nom_mag = lignes.get("NOM");
+                        lst_types_niveau2.add(type);
+                        lst_mag_niveau2.add(nom_mag);
+                    }
+
+                    ////////////////////////////////////////////////////////////////////////////////
+
+                    // Union des magasins :
+
+                    mag_niveau0 = geomen.union(mag_niv0_geom, WKID_RGF93);
+                    mag_niveau1 = geomen.union(mag_niv1_geom, WKID_RGF93);
+                    mag_niveau2 = geomen.union(mag_niv2_geom, WKID_RGF93);
+
+                    ////////////////////////////////////////////////////////////////////////////////
+
+                    // On projete les magasins en RGF93 :
+
+                    projection_mag_niv0 = geomen.project(mag_niveau0, WKID_RGF93, mapRef);
+                    projection_mag_niv1 = geomen.project(mag_niveau1, WKID_RGF93, mapRef);
+                    projection_mag_niv2 = geomen.project(mag_niveau2, WKID_RGF93, mapRef);
+
+                    ////////////////////////////////////////////////////////////////////////////////
+                    // Test :
+                    pt_fnac = gdb.getGeodatabaseTables().get(1).getFeature(35).getGeometry();
 
 
                 } catch (Exception e) {
@@ -573,19 +711,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
 
                 ////////////////////////////////////////////////////////////////////////////////////
 
-                // On projete les arcs en RGF93 :
-
-                //geometries_niveau0 = geomen.union(array_geom_niv0, WKID_RGF93);
-                projection_niv0 = geomen.project(geometries_niveau0, WKID_RGF93, mapRef);
-
-                //geometries_niveau1 = geomen.union(array_geom_niv1, WKID_RGF93);
-                projection_niv1 = geomen.project(geometries_niveau1, WKID_RGF93, mapRef);
-
-                //geometries_niveau2 = geomen.union(array_geom_niv2, WKID_RGF93);
-                projection_niv2 = geomen.project(geometries_niveau2, WKID_RGF93, mapRef);
-
-                ////////////////////////////////////////////////////////////////////////////////////
-
                 // On intersecte l'itinéraire avec les arcs :
 
                 // Add the route shape to the graphics layer
@@ -600,12 +725,106 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
                 //Gestion affichage au moment du calcul d'itinéraire :
 
                 afficherIti();
-                /*
+
                 ////////////////////////////////////////////////////////////////////////////////////
 
-                //QR code
-                projection = geomen.project(geom_QR_code, WKID_RGF93, mapRef);
-                */
+                // Gestion de
+
+                // TODO : projection_fnac = depart
+                // TODO : niveau = niveau du point de depart
+
+                Geometry projection_fnac = geomen.project(pt_fnac, WKID_RGF93, mapRef);
+                int niveau = 1;
+
+                Geometry diff_niv0 = geomen.difference(projection_mag_niv0, projection_fnac, mapRef);
+                Geometry diff_niv1 = geomen.difference(projection_mag_niv1, projection_fnac, mapRef);
+                Geometry diff_niv2 = geomen.difference(projection_mag_niv2, projection_fnac, mapRef);
+
+                double distance_niv0 = geomen.distance(projection_fnac, diff_niv0, mapRef);
+                double distance_niv1 = geomen.distance(projection_fnac, diff_niv1, mapRef);
+                double distance_niv2 = geomen.distance(projection_fnac, diff_niv2, mapRef);
+
+                Unit meter = Unit.create(LinearUnit.Code.METER);
+
+                Log.d("bonjour",""+lst_mag_niveau0.size()+"t"+lst_mag_niveau1.size()+"s"+lst_mag_niveau2.size()+"f"+mag_niv0.length+"g"+mag_niv1.length+"h"+mag_niv2.length);
+
+                if (niveau == 0){
+                    Polygon buff_niv0 = geomen.buffer(projection_fnac, mapRef, distance_niv0, meter);
+                    Geometry magasin = geomen.intersect(buff_niv0, projection_mag_niv0, mapRef);
+                    int taille = 14;
+                    //String texte = "bonjour";
+                    String texte = null;
+                    double dist_mag0_ref = 1000;
+                    Geometry mag = null;
+                    for (int r=0; r<lst_mag_niveau0.size(); r++){
+                        Geometry mag_niv0_r = geomen.project(mag_niv0_geom[r], WKID_RGF93, mapRef);
+                        double dist_mag0 = geomen.distance(magasin, mag_niv0_r, mapRef);
+                        //Log.d("texte",""+dist_mag0);
+                        if (dist_mag0 < dist_mag0_ref && dist_mag0!=0){
+                            texte = lst_mag_niveau0.get(r).toString();
+                            mag = geomen.project(mag_niv0_geom[r], WKID_RGF93, mapRef);;
+                            dist_mag0_ref = dist_mag0;
+                        }
+                    }
+                    Log.d("texte2",""+texte);
+                    Log.d("texte3",""+mag);
+                    int color = Color.rgb(255, 1, 1);
+                    if (mag != null) {
+                        routeHandle = mGraphicsLayer.addGraphic(new Graphic(mag, new TextSymbol(taille, texte, color)));
+                    }
+
+                    //Drawable fnac = getDrawable(R.drawable.ic_action_fnac);
+                    //routeHandle = mGraphicsLayer.addGraphic(new Graphic(magasin, new PictureMarkerSymbol(fnac)));
+                } else if (niveau == 1){
+                    Polygon buff_niv1 = geomen.buffer(projection_fnac, mapRef, distance_niv1, meter);
+                    Geometry magasin = geomen.intersect(buff_niv1, projection_mag_niv1, mapRef);
+                    int taille = 14;
+                    double dist_mag1_ref = 1000;
+                    //String texte = "bonjour";
+                    String texte = null;
+                    Geometry mag = null;
+                    for (int r=0; r<lst_mag_niveau1.size(); r++){
+                        Geometry mag_niv1_r = geomen.project(mag_niv1_geom[r], WKID_RGF93, mapRef);
+                        double dist_mag1 = geomen.distance(magasin, mag_niv1_r, mapRef);
+                        //Log.d("texte",""+dist_mag1);
+                        if (dist_mag1 < dist_mag1_ref && dist_mag1!=0){
+                            texte = lst_mag_niveau1.get(r).toString();
+                            mag = geomen.project(mag_niv1_geom[r], WKID_RGF93, mapRef);;
+                            dist_mag1_ref = dist_mag1;
+                        }
+                    }
+                    Log.d("texte2",""+texte);
+                    Log.d("texte3",""+mag);
+                    int color = Color.rgb(1, 255, 1);
+                    if (mag != null) {
+                        routeHandle = mGraphicsLayer.addGraphic(new Graphic(mag, new TextSymbol(taille, texte, color)));
+                    }
+                } else if (niveau == 2){
+                    Polygon buff_niv2 = geomen.buffer(projection_fnac, mapRef, distance_niv2, meter);
+                    Geometry magasin = geomen.intersect(buff_niv2, projection_mag_niv2, mapRef);
+                    int taille = 14;
+                    double dist_mag2_ref = 1000;
+                    //String texte = "bonjour";
+                    String texte = null;
+                    Geometry mag = null;
+                    for (int r=0; r<lst_mag_niveau2.size(); r++){
+                        Geometry mag_niv2_r = geomen.project(mag_niv2_geom[r], WKID_RGF93, mapRef);
+                        double dist_mag2 = geomen.distance(magasin, mag_niv2_r, mapRef);
+                        //Log.d("texte",""+dist_mag2);
+                        if (dist_mag2 < dist_mag2_ref && dist_mag2!=0){
+                            texte = lst_mag_niveau2.get(r).toString();
+                            mag = geomen.project(mag_niv2_geom[r], WKID_RGF93, mapRef);;
+                            dist_mag2_ref = dist_mag2;
+                        }
+                    }
+                    Log.d("texte2",""+texte);
+                    Log.d("texte3",""+mag);
+                    int color = Color.rgb(1, 1, 255);
+                    if (mag != null) {
+                        routeHandle = mGraphicsLayer.addGraphic(new Graphic(mag, new TextSymbol(taille, texte, color)));
+                    }
+                }
+
                 mMapView.getCallout().hide();
 
             } catch (Exception e) {
@@ -641,7 +860,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Vi
      */
     public void afficherIti(){
         // Défintion symbole pour l'itinéraire :
-        SimpleLineSymbol ligSym = new SimpleLineSymbol(0x99990055, 5);
+        SimpleLineSymbol ligSym = new SimpleLineSymbol(0x99990055, 5, SimpleLineSymbol.STYLE.fromString("DASH"));
 
         // Remove any previous route Graphics
         mGraphicsLayer.removeGraphic(routeHandle);
