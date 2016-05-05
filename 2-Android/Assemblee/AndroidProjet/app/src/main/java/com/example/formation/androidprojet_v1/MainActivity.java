@@ -160,15 +160,7 @@ public class MainActivity extends Activity  {
     private Geometry pt_fnac = null;
 
     // Variables utiles à la récupérations des arcs :
-    // Features :
-
     // Géometries :
-    // Feature :
-    private Feature[] arc_niv0 = new Feature[127];
-    private Feature[] arc_niv1 = new Feature[757];
-    private Feature[] arc_niv2 = new Feature[780];
-
-    // Geometries :
     private Geometry[] array_geom_niv0 = new Geometry[127];
     private Geometry[] array_geom_niv1_1 = new Geometry[380];
     private Geometry[] array_geom_niv1_2 = new Geometry[377];
@@ -185,7 +177,10 @@ public class MainActivity extends Activity  {
     private boolean estRestreint = false;
 
     //Saisie auto :
-    List lst_nom_mag = new ArrayList();
+    private List lst_nom_mag = new ArrayList();
+
+    //Ppv :
+    private int niveau = 0;
 
     // Test :
     private Geometry depart;
@@ -254,10 +249,6 @@ public class MainActivity extends Activity  {
         textView.setAdapter(adapter);
         textView.setThreshold(1); // on commence la recherche automatique dès la première lettre ecrite
         textView.setOnItemClickListener(new BoutonSaisieAutomatiqueListener());
-
-        // Test stop selec :
-        Button testButton = (Button) findViewById(R.id.test_button);
-        testButton.setOnClickListener(testListener);
     }
 
 
@@ -512,103 +503,6 @@ public class MainActivity extends Activity  {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
-    /**
-     * Fonction qui affiche le magasin le plus proche du point de départ :
-     * @param mapRef
-     */
-    public void afficherPpv(SpatialReference mapRef){
-        // Gestion de l'affichage du magasin le plus proche :
-
-        // TODO : projection_fnac = depart
-        // TODO : niveau = niveau du point de depart
-
-        Geometry projection_fnac = geomen.project(pt_fnac, WKID_RGF93, mapRef);
-        int niveau = 1;
-
-        // Différence entre le point et les autres magasins
-        Geometry diff_niv0 = geomen.difference(projection_mag_niv0, projection_fnac, mapRef);
-        Geometry diff_niv1 = geomen.difference(projection_mag_niv1, projection_fnac, mapRef);
-        Geometry diff_niv2 = geomen.difference(projection_mag_niv2, projection_fnac, mapRef);
-
-        // Distance géométrique
-        double distance_niv0 = geomen.distance(projection_fnac, diff_niv0, mapRef);
-        double distance_niv1 = geomen.distance(projection_fnac, diff_niv1, mapRef);
-        double distance_niv2 = geomen.distance(projection_fnac, diff_niv2, mapRef);
-
-        // Définition de l'unité :
-        Unit meter = Unit.create(LinearUnit.Code.METER);
-
-        // Initialisation des variables utile au calcul du ppv :
-        String texte = null;
-        Geometry mag = null;
-        int taille = 14;
-        double dist_ref = 1000;
-        int color = Color.rgb(255, 1, 1);
-
-        if (niveau == 0){
-            Polygon buff_niv0 = geomen.buffer(projection_fnac, mapRef, distance_niv0, meter);
-            Geometry magasin = geomen.intersect(buff_niv0, projection_mag_niv0, mapRef);
-
-            // On cherhce le magasin le plus proche
-            // c'est-à-dire à la distance minimale du point de départ
-            for (int r=0; r<lst_mag_niveau0.size(); r++){
-                Geometry mag_niv0_r = geomen.project(mag_niv0_geom[r], WKID_RGF93, mapRef);
-                double dist_mag0 = geomen.distance(magasin, mag_niv0_r, mapRef);
-                if (dist_mag0 < dist_ref && dist_mag0!=0){
-                    texte = lst_mag_niveau0.get(r).toString();
-                    mag = geomen.project(mag_niv0_geom[r], WKID_RGF93, mapRef);
-                    dist_ref = dist_mag0;
-                }
-            }
-            // Affichage du ppv :
-            if (mag != null) {
-                mGraphicsLayer.addGraphic(new Graphic(mag, new TextSymbol(taille, texte, color)));
-            }
-
-        } else if (niveau == 1){
-            Polygon buff_niv1 = geomen.buffer(projection_fnac, mapRef, distance_niv1, meter);
-            Geometry magasin = geomen.intersect(buff_niv1, projection_mag_niv1, mapRef);
-
-            for (int r=0; r<lst_mag_niveau1.size(); r++){
-                Geometry mag_niv1_r = geomen.project(mag_niv1_geom[r], WKID_RGF93, mapRef);
-                double dist_mag1 = geomen.distance(magasin, mag_niv1_r, mapRef);
-                // On cherhce le magasin le plus proche
-                // c'est-à-dire à la distance minimale du point de départ
-                if (dist_mag1 < dist_ref && dist_mag1!=0){
-                    texte = lst_mag_niveau1.get(r).toString();
-                    mag = geomen.project(mag_niv1_geom[r], WKID_RGF93, mapRef);
-                    dist_ref = dist_mag1;
-                }
-            }
-
-            // Affichage du ppv :
-            if (mag != null) {
-                mGraphicsLayer.addGraphic(new Graphic(mag, new TextSymbol(taille, texte, color)));
-            }
-
-        } else if (niveau == 2){
-            Polygon buff_niv2 = geomen.buffer(projection_fnac, mapRef, distance_niv2, meter);
-            Geometry magasin = geomen.intersect(buff_niv2, projection_mag_niv2, mapRef);
-            // On cherhce le magasin le plus proche
-            // c'est-à-dire à la distance minimale du point de départ
-            for (int r=0; r<lst_mag_niveau2.size(); r++){
-                Geometry mag_niv2_r = geomen.project(mag_niv2_geom[r], WKID_RGF93, mapRef);
-                double dist_mag2 = geomen.distance(magasin, mag_niv2_r, mapRef);
-                if (dist_mag2 < dist_ref && dist_mag2!=0){
-                    texte = lst_mag_niveau2.get(r).toString();
-                    mag = geomen.project(mag_niv2_geom[r], WKID_RGF93, mapRef);
-                    dist_ref = dist_mag2;
-                }
-            }
-
-            // Affichage du ppv :
-            if (mag != null) {
-                mGraphicsLayer.addGraphic(new Graphic(mag, new TextSymbol(taille, texte, color)));
-            }
-        }
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
      * Listener du bouton de choissi d'étage :
@@ -695,6 +589,12 @@ public class MainActivity extends Activity  {
 
         @Override
         public void onItemClick(AdapterView<?> parent, View view,int position, long id) {
+            // Remise à zero des stops :
+            // Our long press will clear the screen
+            mStops.clearFeatures();
+            mGraphicsLayer.removeAll();
+            mMapView.getCallout().hide();
+
             // On selectionne le magasin dans la liste de saisie automatique
             String item = parent.getItemAtPosition(position).toString();
 
@@ -705,7 +605,10 @@ public class MainActivity extends Activity  {
             // on parcourt la liste récupérer au début dans la geodatabase et on récupère la geometrie
             // correspondant au magasin choisie par l'utilisateur
 
+            // Initialisation :
             boolean trouve = false;
+            Drawable marqueur = getResources().getDrawable(R.drawable.ic_action_marqueur);
+            Geometry ptTest = null;
 
             int len0 = mag_niv0.length;
             for(int k=0; k<len0; k++) {
@@ -713,16 +616,9 @@ public class MainActivity extends Activity  {
                 Map<String, Object> lignes = Mag.getAttributes();
                 Object nom_mag = lignes.get("NOM");
                 if(nom_mag.equals(item)){
-                    Geometry ptTest = mag_niv0[k].getGeometry();
-                    SpatialReference mapRef = mMapView.getSpatialReference();
-                    depart = geomen.project(ptTest, WKID_RGF93, mapRef);
-
-                    mGraphicsLayer.addGraphic(new Graphic(depart, new SimpleMarkerSymbol(Color.RED, 10, STYLE.CROSS)));
-
-                    StopGraphic stop = new StopGraphic(depart);
-                    mStops.addFeature(stop);
-
+                    ptTest = mag_niv0[k].getGeometry();
                     trouve = true;
+                    niveau = 0;
                 }
             }
             if(!trouve){
@@ -732,16 +628,9 @@ public class MainActivity extends Activity  {
                     Map<String, Object> lignes = Mag.getAttributes();
                     Object nom_mag = lignes.get("NOM");
                     if(nom_mag.equals(item)){
-                        Geometry ptTest = mag_niv1[k].getGeometry();
-                        SpatialReference mapRef = mMapView.getSpatialReference();
-                        depart = geomen.project(ptTest, WKID_RGF93, mapRef);
-
-                        mGraphicsLayer.addGraphic(new Graphic(depart, new SimpleMarkerSymbol(Color.RED, 10, STYLE.CROSS)));
-
-                        StopGraphic stop = new StopGraphic(depart);
-                        mStops.addFeature(stop);
-
+                        ptTest = mag_niv1[k].getGeometry();
                         trouve = true;
+                        niveau = 1;
                     }
                 }
             }
@@ -752,18 +641,135 @@ public class MainActivity extends Activity  {
                     Map<String, Object> lignes = Mag.getAttributes();
                     Object nom_mag = lignes.get("NOM");
                     if(nom_mag.equals(item)){
-                        Geometry ptTest = mag_niv2[k].getGeometry();
-                        SpatialReference mapRef = mMapView.getSpatialReference();
-                        depart = geomen.project(ptTest, WKID_RGF93, mapRef);
-
-                        mGraphicsLayer.addGraphic(new Graphic(depart, new SimpleMarkerSymbol(Color.RED, 10, STYLE.CROSS)));
-
-                        StopGraphic stop = new StopGraphic(depart);
-                        mStops.addFeature(stop);
-
+                        ptTest = mag_niv2[k].getGeometry();
                         trouve = true;
+                        niveau = 2;
                     }
                 }
+            }
+
+            if(trouve){
+                SpatialReference mapRef = mMapView.getSpatialReference();
+                depart = geomen.project(ptTest, WKID_RGF93, mapRef);
+
+                mGraphicsLayer.addGraphic(new Graphic(depart, new PictureMarkerSymbol(marqueur)));
+
+                StopGraphic stop = new StopGraphic(depart);
+                mStops.addFeature(stop);
+
+                afficherPpv(mapRef);
+            }
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Fonction qui affiche le magasin le plus proche du point de départ :
+     * @param mapRef
+     */
+    public void afficherPpv(SpatialReference mapRef){
+        Log.d("nivAll","Dedans");
+
+        // Gestion de l'affichage du magasin le plus proche :
+
+        //depart = geomen.project(depart, WKID_RGF93, mapRef);
+
+        // Différence entre le point et les autres magasins
+        Geometry diff_niv0 = geomen.difference(projection_mag_niv0, depart, mapRef);
+        Geometry diff_niv1 = geomen.difference(projection_mag_niv1, depart, mapRef);
+        Geometry diff_niv2 = geomen.difference(projection_mag_niv2, depart, mapRef);
+
+        // Distance géométrique
+        double distance_niv0 = geomen.distance(depart, diff_niv0, mapRef);
+        double distance_niv1 = geomen.distance(depart, diff_niv1, mapRef);
+        double distance_niv2 = geomen.distance(depart, diff_niv2, mapRef);
+
+        Log.d("Dist", "0 : " + distance_niv0 + " 1 : " + distance_niv1 + " 2 : " +distance_niv2);
+
+
+        // Définition de l'unité :
+        Unit meter = Unit.create(LinearUnit.Code.METER);
+
+        // Initialisation des variables utile au calcul du ppv :
+        String texte = null;
+        Geometry mag = null;
+        int taille = 14;
+        double dist_ref = 1000;
+        int color = Color.rgb(255, 1, 1);
+
+        if (niveau == 0){
+            Log.d("niv0","Dedans");
+
+            Polygon buff_niv0 = geomen.buffer(depart, mapRef, distance_niv0, meter);
+            Geometry magasin = geomen.intersect(buff_niv0, projection_mag_niv0, mapRef);
+
+            // On cherhce le magasin le plus proche
+            // c'est-à-dire à la distance minimale du point de départ
+            for (int r=0; r<lst_mag_niveau0.size(); r++){
+                Geometry mag_niv0_r = geomen.project(mag_niv0_geom[r], WKID_RGF93, mapRef);
+                double dist_mag0 = geomen.distance(magasin, mag_niv0_r, mapRef);
+                if (dist_mag0 < dist_ref && dist_mag0!=0){
+                    texte = lst_mag_niveau0.get(r).toString();
+                    mag = geomen.project(mag_niv0_geom[r], WKID_RGF93, mapRef);
+                    dist_ref = dist_mag0;
+                }
+            }
+            Log.d("mag",""+ mag);
+            // Affichage du ppv :
+            if (mag != null) {
+                mGraphicsLayer.addGraphic(new Graphic(mag, new TextSymbol(taille, texte, color)));
+
+                Log.d("niv0_mag!null", "Dedans");
+            }
+
+        } else if (niveau == 1){
+            Log.d("niv1","Dedans");
+
+            Polygon buff_niv1 = geomen.buffer(depart, mapRef, distance_niv1, meter);
+            Geometry magasin = geomen.intersect(buff_niv1, projection_mag_niv1, mapRef);
+
+            for (int r=0; r<lst_mag_niveau1.size(); r++){
+                Geometry mag_niv1_r = geomen.project(mag_niv1_geom[r], WKID_RGF93, mapRef);
+                double dist_mag1 = geomen.distance(magasin, mag_niv1_r, mapRef);
+                // On cherhce le magasin le plus proche
+                // c'est-à-dire à la distance minimale du point de départ
+                if (dist_mag1 < dist_ref && dist_mag1!=0){
+                    texte = lst_mag_niveau1.get(r).toString();
+                    mag = geomen.project(mag_niv1_geom[r], WKID_RGF93, mapRef);
+                    dist_ref = dist_mag1;
+                }
+            }
+            Log.d("mag",""+ mag);
+            // Affichage du ppv :
+            if (mag != null) {
+                mGraphicsLayer.addGraphic(new Graphic(mag, new TextSymbol(taille, texte, color)));
+
+                Log.d("niv1_mag!null", "Dedans");
+            }
+
+        } else if (niveau == 2){
+            Log.d("niv2","Dedans");
+
+            Polygon buff_niv2 = geomen.buffer(depart, mapRef, distance_niv2, meter);
+            Geometry magasin = geomen.intersect(buff_niv2, projection_mag_niv2, mapRef);
+            // On cherhce le magasin le plus proche
+            // c'est-à-dire à la distance minimale du point de départ
+            for (int r=0; r<lst_mag_niveau2.size(); r++){
+                Geometry mag_niv2_r = geomen.project(mag_niv2_geom[r], WKID_RGF93, mapRef);
+                double dist_mag2 = geomen.distance(magasin, mag_niv2_r, mapRef);
+                if (dist_mag2 < dist_ref && dist_mag2!=0){
+                    texte = lst_mag_niveau2.get(r).toString();
+                    mag = geomen.project(mag_niv2_geom[r], WKID_RGF93, mapRef);
+                    dist_ref = dist_mag2;
+                }
+            }
+            Log.d("mag",""+ mag);
+            // Affichage du ppv :
+            if (mag != null) {
+                mGraphicsLayer.addGraphic(new Graphic(mag, new TextSymbol(taille, texte, color)));
+
+                Log.d("niv2_mag!null", "Dedans");
             }
         }
     }
@@ -1022,38 +1028,4 @@ public class MainActivity extends Activity  {
             e.printStackTrace();
         }
     }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    /**
-     * Tests :
-     */
-
-    private View.OnClickListener testListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            String networkPath = "/ProjArcades/ArcGIS/Routing/base_de_donnees.geodatabase";
-            Geodatabase gdb = null;
-            try {
-                gdb = new Geodatabase(extern + networkPath);
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }
-
-            GeodatabaseFeatureTable point_joint0 = gdb.getGeodatabaseTables().get(0);
-
-            try {
-                Geometry ptTest = point_joint0.getFeature(1).getGeometry();
-                SpatialReference mapRef = mMapView.getSpatialReference();
-                depart = geomen.project(ptTest, WKID_RGF93, mapRef);
-
-                mGraphicsLayer.addGraphic(new Graphic(depart, new SimpleMarkerSymbol(Color.RED, 10, STYLE.CROSS)));
-
-                StopGraphic stop = new StopGraphic(depart);
-                mStops.addFeature(stop);
-
-            } catch (TableException e) {
-                e.printStackTrace();
-            }
-        }
-    };
 }

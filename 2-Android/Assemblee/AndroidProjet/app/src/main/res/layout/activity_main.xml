@@ -55,12 +55,6 @@
         android:id="@+id/checkBoxRes"
         android:checked="false" />
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/test_button"
-        android:layout_centerHorizontal="true" />
-
     <AutoCompleteTextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -71,7 +65,6 @@
         android:ems="10"
         android:hint="Départ">
         <requestFocus />
-
     </AutoCompleteTextView>
 
 </RelativeLayout>
