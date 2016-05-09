@@ -104,6 +104,7 @@ public class MainActivity extends Activity  {
     private Spinner dSpinner;
 
     // Variables utiles pour la gestion du multi-étage :
+    Spinner spinnerEtgSel;
     private boolean etgsSelected = false;
     private boolean etg0Selected = false;
     private boolean etg1Selected = false;
@@ -133,7 +134,6 @@ public class MainActivity extends Activity  {
 
     // Variables utiles pour la récupération des magasins :
     // Features :
-    private Feature[] mag_all = new Feature[142];
     private Feature[] mag_niv0 = new Feature[12];
     private Feature[] mag_niv1 = new Feature[66];
     private Feature[] mag_niv2 = new Feature[64];
@@ -183,7 +183,8 @@ public class MainActivity extends Activity  {
     private AutoCompleteTextView textViewDep;
 
     //Ppv :
-    private int niveau = 0;
+    private int niveau_dep = 0;
+    private int niveau_arr = 0;
 
     // Définition des points de départ et d'arrivé :
     private Geometry depart;
@@ -196,9 +197,9 @@ public class MainActivity extends Activity  {
         setContentView(R.layout.activity_main);
 
         // Spinner element pour changement etage
-        Spinner spinner = (Spinner) findViewById(R.id.spinner1);
+        spinnerEtgSel = (Spinner) findViewById(R.id.spinnerEtgSelc);
         // Spinner click listener pour changement etage
-        spinner.setOnItemSelectedListener(new BoutonEtageListener());
+        spinnerEtgSel.setOnItemSelectedListener(new BoutonEtageListener());
 
         File tpk = new File(extern + tpkPath);
         Log.d("RoutingAndGeocoding", "Find tpk: " + tpk.exists());
@@ -323,14 +324,16 @@ public class MainActivity extends Activity  {
 
         @Override
         public void onClick(View v) {
+            SpatialReference mapRef = mMapView.getSpatialReference();
+
             if (((CheckBox) v).isChecked()) {
                 estRestreint = true;
                 clearAffich();
-                calculerIti();
+                calculerIti(mapRef);
             } else {
                 estRestreint = false;
                 clearAffich();
-                calculerIti();
+                calculerIti(mapRef);
             }
         }
     }
@@ -393,9 +396,7 @@ public class MainActivity extends Activity  {
             afficherIti();
         }
 
-        public void onNothingSelected(AdapterView<?> arg0) {
-            // TODO : Auto-generated method stub
-        }
+        public void onNothingSelected(AdapterView<?> arg0) {}
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -459,7 +460,7 @@ public class MainActivity extends Activity  {
             String item = parent.getItemAtPosition(position).toString();
             Log.v("mag_selectionne",item);
 
-            ptTest = trouverPtSel(item);
+            ptTest = trouverPtSel(item, true);
             if (ptTest !=null){
                 trouve = true;
             }
@@ -470,7 +471,6 @@ public class MainActivity extends Activity  {
             if(trouve){
                 depart = geomen.project(ptTest, WKID_RGF93, mapRef);
                 ajouterPoint(depart, symStop);
-                //afficherPpv(mapRef);
             }
 
             // On récupére à nouveau le nombre de stops
@@ -480,7 +480,8 @@ public class MainActivity extends Activity  {
 
             // Si on a 2 stops on calcule et on affiche l'itinéraire
             if( tStop >= 2) {
-                calculerIti();
+                calculerIti(mapRef);
+                afficherPpv(mapRef);
             }
         }
     }
@@ -521,7 +522,7 @@ public class MainActivity extends Activity  {
             String item = parent.getItemAtPosition(position).toString();
             Log.v("mag_selectionne",item);
 
-            ptTest = trouverPtSel(item);
+            ptTest = trouverPtSel(item, false);
             if (ptTest !=null){
                 trouve = true;
             }
@@ -542,7 +543,8 @@ public class MainActivity extends Activity  {
 
             // Si on a 2 stops on calcule et on affiche l'itinéraire
             if( tStop >= 2) {
-                calculerIti();
+                calculerIti(mapRef);
+                afficherPpv(mapRef);
             }
         }
     }
@@ -668,20 +670,7 @@ public class MainActivity extends Activity  {
             Log.d("geometries_niveau1", "" + geometries_niveau1.calculateLength2D());
             Log.d("geometries_niveau2", "" + geometries_niveau2.calculateLength2D());
 
-            ////////////////////////////////////////////////////////////////////////////////
-
-            // On projete les arcs en RGF93 :
-
-            //geometries_niveau0 = geomen.union(array_geom_niv0, WKID_RGF93);
-            projection_niv0 = geomen.project(geometries_niveau0, WKID_RGF93, mapRef);
-
-            //geometries_niveau1 = geomen.union(array_geom_niv1, WKID_RGF93);
-            projection_niv1 = geomen.project(geometries_niveau1, WKID_RGF93, mapRef);
-
-            //geometries_niveau2 = geomen.union(array_geom_niv2, WKID_RGF93);
-            projection_niv2 = geomen.project(geometries_niveau2, WKID_RGF93, mapRef);
-
-            ///////////////////////////////////////////////////////////////////////////////////////
+            ////////////////////////////////////////////////////////////////////////////////////////
 
             // Récupération des magasins :
             for(int v=0; v<=2; v++){
@@ -772,13 +761,6 @@ public class MainActivity extends Activity  {
 
             ////////////////////////////////////////////////////////////////////////////////////////
 
-            // On projete les magasins en RGF93 :
-
-            projection_mag_niv0 = geomen.project(mag_niveau0, WKID_RGF93, mapRef);
-            projection_mag_niv1 = geomen.project(mag_niveau1, WKID_RGF93, mapRef);
-            projection_mag_niv2 = geomen.project(mag_niveau2, WKID_RGF93, mapRef);
-
-            ////////////////////////////////////////////////////////////////////////////////////////
 
             // Test :
 
@@ -794,7 +776,13 @@ public class MainActivity extends Activity  {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public Geometry trouverPtSel(String item){
+    /**
+     * Fonction qui retrouve un magasin item dans la liste de magasins
+     * @param item
+     * @param estDepart
+     * @return
+     */
+    public Geometry trouverPtSel(String item, boolean estDepart){
 
         // Bolléen (vrai si un point est selectionné, faux sinon) :
         boolean trouve = false;
@@ -812,7 +800,8 @@ public class MainActivity extends Activity  {
             if(nom_mag.equals(item)){
                 ptTest = mag_niv0[k].getGeometry();
                 trouve = true;
-                niveau = 0;
+                if(estDepart) {niveau_dep = 0;}
+                else{niveau_arr = 0;}
             }
         }
         if(!trouve){
@@ -824,7 +813,8 @@ public class MainActivity extends Activity  {
                 if(nom_mag.equals(item)){
                     ptTest = mag_niv1[k].getGeometry();
                     trouve = true;
-                    niveau = 1;
+                    if(estDepart) {niveau_dep = 1;}
+                    else{niveau_arr = 1;}
                 }
             }
         }
@@ -836,12 +826,11 @@ public class MainActivity extends Activity  {
                 Object nom_mag = lignes.get("NOM");
                 if(nom_mag.equals(item)){
                     ptTest = mag_niv2[k].getGeometry();
-                    trouve = true;
-                    niveau = 2;
+                    if(estDepart) {niveau_dep = 2;}
+                    else{niveau_arr = 2;}
                 }
             }
         }
-
         return ptTest;
     }
 
@@ -874,7 +863,7 @@ public class MainActivity extends Activity  {
     /**
      * Fonction qui calcule l'tinéraire
      */
-    public void calculerIti(){
+    public void calculerIti(SpatialReference mapRef){
 
         // Return default behavior if we did not initialize properly.
         if (mRouteTask == null) {
@@ -885,7 +874,6 @@ public class MainActivity extends Activity  {
             // Set the correct input spatial reference on the stops and the
             // desired output spatial reference on the RouteParameters object.
             RouteParameters params = mRouteTask.retrieveDefaultRouteTaskParameters();
-            SpatialReference mapRef = mMapView.getSpatialReference();
             params.setOutSpatialReference(mapRef);
             mStops.setSpatialReference(mapRef);
 
@@ -909,13 +897,19 @@ public class MainActivity extends Activity  {
             // result returned on the output.
             Route result = results.getRoutes().get(0);
 
-            ////////////////////////////////////////////////////////////////////////////////////
+            ////////////////////////////////////////////////////////////////////////////////////////
 
-            // On intersecte l'itinéraire avec les arcs :
+            // On projete les arcs dans le repère local :
 
-            // Add the route shape to the graphics layer
+            projection_niv0 = geomen.project(geometries_niveau0, WKID_RGF93, mapRef);
+            projection_niv1 = geomen.project(geometries_niveau1, WKID_RGF93, mapRef);
+            projection_niv2 = geomen.project(geometries_niveau2, WKID_RGF93, mapRef);
+
+            ////////////////////////////////////////////////////////////////////////////////////////
+
             geom = result.getRouteGraphic().getGeometry();
 
+            // On intersecte l'itinéraire avec les arcs :
             geom_intersect_niv0 = geomen.intersect(geom, projection_niv0, mapRef);
             geom_intersect_niv1 = geomen.intersect(geom, projection_niv1, mapRef);
             geom_intersect_niv2 = geomen.intersect(geom, projection_niv2, mapRef);
@@ -923,7 +917,7 @@ public class MainActivity extends Activity  {
             ////////////////////////////////////////////////////////////////////////////////////
 
             //Gestion affichage au moment du calcul d'itinéraire :
-
+            spinnerEtgSel.setSelection(niveau_dep);
             afficherIti();
 
             ////////////////////////////////////////////////////////////////////////////////////
@@ -985,7 +979,10 @@ public class MainActivity extends Activity  {
     public void afficherPpv(SpatialReference mapRef){
         Log.d("nivAll","Dedans");
 
-        // Gestion de l'affichage du magasin le plus proche :
+        // On projete les magasins en mapRef :
+        projection_mag_niv0 = geomen.project(mag_niveau0, WKID_RGF93, mapRef);
+        projection_mag_niv1 = geomen.project(mag_niveau1, WKID_RGF93, mapRef);
+        projection_mag_niv2 = geomen.project(mag_niveau2, WKID_RGF93, mapRef);
 
         //depart = geomen.project(depart, WKID_RGF93, mapRef);
 
@@ -1014,7 +1011,7 @@ public class MainActivity extends Activity  {
         double dist_ref = 1000;
         int color = Color.rgb(255, 1, 1);
 
-        if (niveau == 0){
+        if (niveau_dep == 0){
             Log.d("niv0","Dedans");
 
             Polygon buff_niv0 = geomen.buffer(depart, mapRef, distance_niv0, meter);
@@ -1045,7 +1042,7 @@ public class MainActivity extends Activity  {
                 Log.d("niv0_mag!null", "Dedans");
             }
 
-        } else if (niveau == 1){
+        } else if (niveau_dep == 1){
             Log.d("niv1","Dedans");
 
             Polygon buff_niv1 = geomen.buffer(depart, mapRef, distance_niv1, meter);
@@ -1076,7 +1073,7 @@ public class MainActivity extends Activity  {
                 Log.d("niv1_mag!null", "Dedans");
             }
 
-        } else if (niveau == 2){
+        } else if (niveau_dep == 2){
             Log.d("niv2","Dedans");
 
             Polygon buff_niv2 = geomen.buffer(depart, mapRef, distance_niv2, meter);
