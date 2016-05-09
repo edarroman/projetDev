@@ -179,6 +179,8 @@ public class MainActivity extends Activity  {
 
     //Saisie auto :
     private List lst_nom_mag = new ArrayList();
+    private AutoCompleteTextView textViewArr;
+    private AutoCompleteTextView textViewDep;
 
     //Ppv :
     private int niveau = 0;
@@ -245,21 +247,21 @@ public class MainActivity extends Activity  {
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_dropdown_item_1line, lst_nom_mag);
         // Bouton :
-        AutoCompleteTextView textViewDep = (AutoCompleteTextView)
+        textViewDep = (AutoCompleteTextView)
                 findViewById(R.id.dep_magasin);
         String depTxt = getResources().getString(R.string.dep);
         textViewDep .setHint(depTxt);
         textViewDep .setAdapter(adapter);
         textViewDep .setThreshold(1); // on commence la recherche automatique dès la première lettre ecrite
-        textViewDep .setOnItemClickListener(new BoutonSaisieAutomatiqueListener());
+        textViewDep .setOnItemClickListener(new BoutonSaisieAutomatiqueDepListener());
 
-        AutoCompleteTextView textViewArr = (AutoCompleteTextView)
+        textViewArr = (AutoCompleteTextView)
                 findViewById(R.id.arr_magasin);
         String arrTxt = getResources().getString(R.string.arr);
         textViewArr .setHint(arrTxt);
         textViewArr .setAdapter(adapter);
         textViewArr .setThreshold(1); // on commence la recherche automatique dès la première lettre ecrite
-        textViewArr .setOnItemClickListener(new BoutonSaisieAutomatiqueListener());
+        textViewArr .setOnItemClickListener(new BoutonSaisieAutomatiqueArrListener());
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -412,16 +414,22 @@ public class MainActivity extends Activity  {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
-    class BoutonSaisieAutomatiqueListener implements AdapterView.OnItemClickListener {
+    /**
+     * Listener bouton saise auto
+     * Il y en a deux car aucun moyen e récupérere facilement l'id de AutoCompleteTextView sur laquelle on clique
+     */
+
+    // Départ :
+    class BoutonSaisieAutomatiqueDepListener implements AdapterView.OnItemClickListener {
 
         @Override
         public void onItemClick(AdapterView<?> parent, View view,int position, long id) {
+            Log.d("View_id",""+view.getId());
             // Initialisation :
-
-            // Référence spatiale
+            // Référence spatiale :
             SpatialReference mapRef = mMapView.getSpatialReference();
 
-            // Bolléen (vrai si un point et selectionner, faux sinon) :
+            // Bolléen (vrai si un point est selectionné, faux sinon) :
             boolean trouve = false;
 
             // Définition du symbole des points :
@@ -439,83 +447,93 @@ public class MainActivity extends Activity  {
             // On supprime réinistiallise la vue et on remet en fonction du bouton sélectionné le départ
             // ou l'arrivé (on remet le départ si on modifie l'arrivé et inversement)
             if( tStop >=2 ) {
-                switch(view.getId()) {
-                    case R.id.dep_magasin:
-                        Log.d("switch_dep","OK");
-                        clearAffich();
-                        ajouterPoint(arrive, symStop);
-                        break;
-                    case R.id.arr_magasin:
-                        Log.d("switch_arr","OK");
-                        clearAffich();
-                        ajouterPoint(depart, symStop);
-                        break;
-                }
+                clearAffich();
+                ajouterPoint(depart, symStop);
             }
 
             // On selectionne le magasin dans la liste de saisie automatique
             String item = parent.getItemAtPosition(position).toString();
             Log.v("mag_selectionne",item);
 
-            // On parcourt la liste récupérer au début dans la geodatabase et on récupère la geometrie
-            // correspondant au magasin choisie par l'utilisateur
-            int len0 = mag_niv0.length;
-            for(int k=0; k<len0; k++) {
-                Feature Mag =  mag_niv0[k];
-                Map<String, Object> lignes = Mag.getAttributes();
-                Object nom_mag = lignes.get("NOM");
-                if(nom_mag.equals(item)){
-                    ptTest = mag_niv0[k].getGeometry();
-                    trouve = true;
-                    niveau = 0;
-                }
+            ptTest = trouverPtSel(item);
+            if (ptTest !=null){
+                trouve = true;
             }
-            if(!trouve){
-                int len1 = mag_niv1.length;
-                for(int k=0; k<len1; k++) {
-                    Feature Mag =  mag_niv1[k];
-                    Map<String, Object> lignes = Mag.getAttributes();
-                    Object nom_mag = lignes.get("NOM");
-                    if(nom_mag.equals(item)){
-                        ptTest = mag_niv1[k].getGeometry();
-                        trouve = true;
-                        niveau = 1;
-                    }
-                }
+            
+            // Lorsque qu'on a trouvé un point
+            // On gère le fait que ce soit le départ ou l'arrivé
+            // Dans tout les cas on l'ajoute au stop et on l'affiche
+            if(trouve){
+                depart = geomen.project(ptTest, WKID_RGF93, mapRef);
+                ajouterPoint(depart, symStop);
+                //afficherPpv(mapRef);
             }
-            if(!trouve){
-                int len2 = mag_niv2.length;
-                for(int k=0; k<len2; k++) {
-                    Feature Mag =  mag_niv2[k];
-                    Map<String, Object> lignes = Mag.getAttributes();
-                    Object nom_mag = lignes.get("NOM");
-                    if(nom_mag.equals(item)){
-                        ptTest = mag_niv2[k].getGeometry();
-                        trouve = true;
-                        niveau = 2;
-                    }
-                }
+
+            // On récupére à nouveau le nombre de stops
+            tStop = mStops.getFeatures().size();
+
+            Log.d("nStop","" + tStop );
+
+            // Si on a 2 stops on calcule et on affiche l'itinéraire
+            if( tStop >= 2) {
+                calculerIti();
+            }
+        }
+    }
+
+    // Arrivée :
+    class BoutonSaisieAutomatiqueArrListener implements AdapterView.OnItemClickListener {
+
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view,int position, long id) {
+            // Initialisation :
+            // Référence spatiale :
+            SpatialReference mapRef = mMapView.getSpatialReference();
+
+            // Bolléen (vrai si un point est selectionné, faux sinon) :
+            boolean trouve = false;
+
+            // Définition du symbole des points :
+            Drawable marqueur = getResources().getDrawable(R.drawable.ic_action_marqueur);
+            Symbol symStop = new PictureMarkerSymbol(marqueur);
+
+            // Définition de la géométrie :
+            Geometry ptTest = null;
+
+            // Nombre de point sélectionnés :
+            int tStop = mStops.getFeatures().size();
+
+            // Remise à zero des stops :
+            // Si il y a plus de deus stops au départ
+            // On supprime réinistiallise la vue et on remet en fonction du bouton sélectionné le départ
+            // ou l'arrivé (on remet le départ si on modifie l'arrivé et inversement)
+            if( tStop >=2 ) {
+                clearAffich();
+                ajouterPoint(depart, symStop);
+            }
+
+            // On selectionne le magasin dans la liste de saisie automatique
+            String item = parent.getItemAtPosition(position).toString();
+            Log.v("mag_selectionne",item);
+
+            ptTest = trouverPtSel(item);
+            if (ptTest !=null){
+                trouve = true;
             }
 
             // Lorsque qu'on a trouvé un point
             // On gère le fait que ce soit le départ ou l'arrivé
             // Dans tout les cas on l'ajoute au stop et on l'affiche
             if(trouve){
-                switch(view.getId()) {
-                    case R.id.dep_magasin:
-                        depart = geomen.project(ptTest, WKID_RGF93, mapRef);
-                        ajouterPoint(depart, symStop);
-                        break;
-                    case R.id.arr_magasin:
-                        arrive = geomen.project(ptTest, WKID_RGF93, mapRef);
-                        ajouterPoint(arrive, symStop);
-                        break;
-                }
-                //afficherPpv(mapRef);
+                Log.d("if_arr", "OK");
+                arrive = geomen.project(ptTest, WKID_RGF93, mapRef);
+                ajouterPoint(arrive, symStop);
             }
 
             // On récupére à nouveau le nombre de stops
             tStop = mStops.getFeatures().size();
+
+            Log.d("nStop","" + tStop );
 
             // Si on a 2 stops on calcule et on affiche l'itinéraire
             if( tStop >= 2) {
@@ -658,7 +676,7 @@ public class MainActivity extends Activity  {
             //geometries_niveau2 = geomen.union(array_geom_niv2, WKID_RGF93);
             projection_niv2 = geomen.project(geometries_niveau2, WKID_RGF93, mapRef);
 
-            ////////////////////////////////////////////////////////////////////////////////
+            ///////////////////////////////////////////////////////////////////////////////////////
 
             // Récupération des magasins :
             for(int v=0; v<=2; v++){
@@ -682,7 +700,7 @@ public class MainActivity extends Activity  {
                 }
             }
 
-            ////////////////////////////////////////////////////////////////////////////////
+            ///////////////////////////////////////////////////////////////////////////////////////
 
             // Récupération des géométries, noms type :
             // Etage 0
@@ -739,7 +757,7 @@ public class MainActivity extends Activity  {
                 lst_nom_mag.add(nom_mag);
             }
 
-            ////////////////////////////////////////////////////////////////////////////////
+            ////////////////////////////////////////////////////////////////////////////////////////
 
             // Union des magasins :
 
@@ -747,7 +765,7 @@ public class MainActivity extends Activity  {
             mag_niveau1 = geomen.union(mag_niv1_geom, WKID_RGF93);
             mag_niveau2 = geomen.union(mag_niv2_geom, WKID_RGF93);
 
-            ////////////////////////////////////////////////////////////////////////////////
+            ////////////////////////////////////////////////////////////////////////////////////////
 
             // On projete les magasins en RGF93 :
 
@@ -755,7 +773,7 @@ public class MainActivity extends Activity  {
             projection_mag_niv1 = geomen.project(mag_niveau1, WKID_RGF93, mapRef);
             projection_mag_niv2 = geomen.project(mag_niveau2, WKID_RGF93, mapRef);
 
-            ////////////////////////////////////////////////////////////////////////////////
+            ////////////////////////////////////////////////////////////////////////////////////////
 
             // Test :
 
@@ -768,6 +786,60 @@ public class MainActivity extends Activity  {
             e.printStackTrace();
         }
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public Geometry trouverPtSel(String item){
+
+        // Bolléen (vrai si un point est selectionné, faux sinon) :
+        boolean trouve = false;
+
+        // Définition de la géométrie :
+        Geometry ptTest = null;
+
+        // On parcourt la liste récupérer au début dans la geodatabase et on récupère la geometrie
+        // correspondant au magasin choisie par l'utilisateur
+        int len0 = mag_niv0.length;
+        for(int k=0; k<len0; k++) {
+            Feature Mag =  mag_niv0[k];
+            Map<String, Object> lignes = Mag.getAttributes();
+            Object nom_mag = lignes.get("NOM");
+            if(nom_mag.equals(item)){
+                ptTest = mag_niv0[k].getGeometry();
+                trouve = true;
+                niveau = 0;
+            }
+        }
+        if(!trouve){
+            int len1 = mag_niv1.length;
+            for(int k=0; k<len1; k++) {
+                Feature Mag =  mag_niv1[k];
+                Map<String, Object> lignes = Mag.getAttributes();
+                Object nom_mag = lignes.get("NOM");
+                if(nom_mag.equals(item)){
+                    ptTest = mag_niv1[k].getGeometry();
+                    trouve = true;
+                    niveau = 1;
+                }
+            }
+        }
+        if(!trouve){
+            int len2 = mag_niv2.length;
+            for(int k=0; k<len2; k++) {
+                Feature Mag =  mag_niv2[k];
+                Map<String, Object> lignes = Mag.getAttributes();
+                Object nom_mag = lignes.get("NOM");
+                if(nom_mag.equals(item)){
+                    ptTest = mag_niv2[k].getGeometry();
+                    trouve = true;
+                    niveau = 2;
+                }
+            }
+        }
+
+        return ptTest;
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
