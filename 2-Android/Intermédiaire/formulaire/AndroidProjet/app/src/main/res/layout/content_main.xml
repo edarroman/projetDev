@@ -19,5 +19,68 @@
         android:layout_height="match_parent">
     </com.esri.android.map.MapView>
 
+    <Spinner
+        android:id="@+id/directionsSpinner"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content" />
+
+    <Spinner
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/spinner1"
+        android:entries="@array/etage_array"
+        android:prompt="@string/choix_etage"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/scan_button"
+        android:layout_below="@+id/directionsSpinner"
+        android:layout_centerHorizontal="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:id="@+id/scan_format"
+        android:layout_below="@+id/scan_button"
+        android:layout_centerHorizontal="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:id="@+id/scan_content"
+        android:layout_below="@+id/scan_format"
+        android:layout_centerHorizontal="true" />
+
+    <CheckBox
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/checkBoxRes"
+        android:checked="false" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/test_button"
+        android:layout_centerHorizontal="true" />
+
+    <AutoCompleteTextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/nom_magasin"
+        android:layout_centerVertical="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:ems="10"
+        android:hint="Départ">
+        <requestFocus />
+
+    </AutoCompleteTextView>
+
 
 </RelativeLayout>

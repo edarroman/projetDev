@@ -1,9 +1,8 @@
 package com.example.formation.androidprojet_v1;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-
-import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -12,8 +11,6 @@ import android.widget.ListView;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
-
-import android.widget.Toast;
 
 
 public class Listetype extends Activity {

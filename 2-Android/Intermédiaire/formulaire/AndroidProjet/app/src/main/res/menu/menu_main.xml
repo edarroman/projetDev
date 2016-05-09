@@ -5,5 +5,6 @@
     android:id="@+id/action_choix"
     android:orderInCategory="0"
     actionbarcompat_mse:showAsAction="never"
-    android:title="@string/action_choix"/>
+    android:title="Itinéraire"/>
+
 </menu>
