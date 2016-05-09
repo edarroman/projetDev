@@ -42,6 +42,7 @@ import com.esri.core.symbol.PictureMarkerSymbol;
 import com.esri.core.symbol.SimpleLineSymbol;
 import com.esri.core.symbol.SimpleMarkerSymbol;
 import com.esri.core.symbol.SimpleMarkerSymbol.STYLE;
+import com.esri.core.symbol.Symbol;
 import com.esri.core.symbol.TextSymbol;
 import com.esri.core.table.TableException;
 import com.esri.core.tasks.geocode.Locator;
@@ -182,8 +183,9 @@ public class MainActivity extends Activity  {
     //Ppv :
     private int niveau = 0;
 
-    // Test :
+    // Définition des points de départ et d'arrivé :
     private Geometry depart;
+    private Geometry arrive;
 
 
     @Override
@@ -229,9 +231,8 @@ public class MainActivity extends Activity  {
         checkBoxRes.setText(resTxt);
         checkBoxRes.setOnClickListener(checkedListener);
 
-        // Initialize the RouteTask and Locator with the local data
+        // Récupération des élémenst dans la bdd :
         accesBdd();
-        mMapView.setOnTouchListener(new TouchListener(MainActivity.this, mMapView));
 
         // QR code
         Button qrButton = (Button) findViewById(R.id.scan_button);
@@ -240,17 +241,26 @@ public class MainActivity extends Activity  {
         qrButton.setOnClickListener(new BoutonQRcodeListener());
 
         // Saisie automatique
-        //final ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,android.R.layout.simple_dropdown_item_1line, lst_nom_mag);
+        // Liste magaisn :
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_dropdown_item_1line, lst_nom_mag);
-        //Log.d("lst_mag", "" + lst_nom_mag);
-        AutoCompleteTextView textView = (AutoCompleteTextView)
-                findViewById(R.id.nom_magasin);
-        textView.setAdapter(adapter);
-        textView.setThreshold(1); // on commence la recherche automatique dès la première lettre ecrite
-        textView.setOnItemClickListener(new BoutonSaisieAutomatiqueListener());
-    }
+        // Bouton :
+        AutoCompleteTextView textViewDep = (AutoCompleteTextView)
+                findViewById(R.id.dep_magasin);
+        String depTxt = getResources().getString(R.string.dep);
+        textViewDep .setHint(depTxt);
+        textViewDep .setAdapter(adapter);
+        textViewDep .setThreshold(1); // on commence la recherche automatique dès la première lettre ecrite
+        textViewDep .setOnItemClickListener(new BoutonSaisieAutomatiqueListener());
 
+        AutoCompleteTextView textViewArr = (AutoCompleteTextView)
+                findViewById(R.id.arr_magasin);
+        String arrTxt = getResources().getString(R.string.arr);
+        textViewArr .setHint(arrTxt);
+        textViewArr .setAdapter(adapter);
+        textViewArr .setThreshold(1); // on commence la recherche automatique dès la première lettre ecrite
+        textViewArr .setOnItemClickListener(new BoutonSaisieAutomatiqueListener());
+    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -301,150 +311,9 @@ public class MainActivity extends Activity  {
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-
-    /**
-     * Gestion itinéraire :
-     */
-
-    class TouchListener extends MapOnTouchListener {
-        /**
-         * Evenement sur une longue pression du doigt supprsesions des stops et de l'itinéraire
-         * @param point
-         */
-        @Override
-        public void onLongPress(MotionEvent point) {
-            // Our long press will clear the screen
-            mStops.clearFeatures();
-            mGraphicsLayer.removeAll();
-            mMapView.getCallout().hide();
-        }
-
-        ////////////////////////////////////////////////////////////////////////////////////////////
-
-        /**
-         * Evenement zvec une tape on ajoute un point (= un stop)
-         * @param point
-         * @return
-         */
-        @Override
-        public boolean onSingleTap(MotionEvent point) {
-
-            if (mLocator == null) {
-                popToast("Locator uninitialized", true);
-                return super.onSingleTap(point);
-            }
-            // Add a graphic to the screen for the touch event
-            Point mapPoint = mMapView.toMapPoint(point.getX(), point.getY());
-            //Graphic graphic = new Graphic(mapPoint, new SimpleMarkerSymbol(Color.BLUE, 10, STYLE.DIAMOND));
-
-            // TODO : se renseigner sur getDrawable()
-
-            Drawable marqueur = getResources().getDrawable(R.drawable.ic_action_marqueur);
-            //Log.d("Pic", "" + new PictureMarkerSymbol(marqueur));
-            Graphic graphic = new Graphic(mapPoint, new PictureMarkerSymbol(marqueur));
-
-            mGraphicsLayer.addGraphic(graphic);
-
-            try {
-                // Attempt to reverse geocode the point.
-                // Our input and output spatial reference will
-                // be the same as the map.
-                SpatialReference mapRef = mMapView.getSpatialReference();
-                LocatorReverseGeocodeResult result = mLocator.reverseGeocode(mapPoint, 50, mapRef, mapRef);
-
-            } catch (Exception e) {
-                Log.v("Reverse Geocode", e.getMessage());
-            }
-
-            // Add the touch event as a stop
-            StopGraphic stop = new StopGraphic(graphic);
-            mStops.addFeature(stop);
-
-            return true;
-        }
-
-        ////////////////////////////////////////////////////////////////////////////////////////////
-
-        /**
-         * Evenement au double tape : calcule de l'itinéraire et affichage
-         * @param point
-         * @return
-         */
-        @Override
-        public boolean onDoubleTap(MotionEvent point) {
-
-            // Return default behavior if we did not initialize properly.
-            if (mRouteTask == null) {
-                popToast("RouteTask uninitialized.", true);
-                return super.onDoubleTap(point);
-            }
-
-            try {
-                // Set the correct input spatial reference on the stops and the
-                // desired output spatial reference on the RouteParameters object.
-                RouteParameters params = mRouteTask.retrieveDefaultRouteTaskParameters();
-                SpatialReference mapRef = mMapView.getSpatialReference();
-                params.setOutSpatialReference(mapRef);
-                mStops.setSpatialReference(mapRef);
-
-                if(estRestreint){
-                    String[] restrictions = {"Restriction"};
-                    params.setRestrictionAttributeNames(restrictions);
-                } else{
-                    String[] restrictions = {""};
-                    params.setRestrictionAttributeNames(restrictions);
-                }
-
-                // Set the stops and since we want driving directions,
-                // returnDirections==true
-                params.setStops(mStops);
-                params.setReturnDirections(true);
-
-                // Perform the solve
-                RouteResult results = mRouteTask.solve(params);
-
-                // Grab the results; for offline routing, there will only be one
-                // result returned on the output.
-                Route result = results.getRoutes().get(0);
-
-                ////////////////////////////////////////////////////////////////////////////////////
-
-                // On intersecte l'itinéraire avec les arcs :
-
-                // Add the route shape to the graphics layer
-                geom = result.getRouteGraphic().getGeometry();
-
-                geom_intersect_niv0 = geomen.intersect(geom, projection_niv0, mapRef);
-                geom_intersect_niv1 = geomen.intersect(geom, projection_niv1, mapRef);
-                geom_intersect_niv2 = geomen.intersect(geom, projection_niv2, mapRef);
-
-                ////////////////////////////////////////////////////////////////////////////////////
-
-                //Gestion affichage au moment du calcul d'itinéraire :
-
-                afficherIti();
-
-                ////////////////////////////////////////////////////////////////////////////////////
-
-                //Gestion affichage du plus proche voisin (magasin le plus proche du point de départ) :
-
-                afficherPpv(mapRef);
-
-                ////////////////////////////////////////////////////////////////////////////////////
-                mMapView.getCallout().hide();
-
-            } catch (Exception e) {
-                popToast("Solve Failed: " + e.getMessage(), true);
-                e.printStackTrace();
-            }
-            return true;
-        }
-
-        public TouchListener(Context context, MapView view) {
-            super(context, view);}
-    }
-
+    //////////////////////////////////// LISTENERS : ///////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////
+
     /**
     * Listener du bouton de la restriction.
      * */
@@ -458,48 +327,6 @@ public class MainActivity extends Activity  {
             }
         }
     };
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-
-    /**
-     * Fonction pour afficher l'itinéraire en fonction de l'étage sélectionné
-     */
-    public void afficherIti(){
-        // Défintion symbole pour l'itinéraire :
-        SimpleLineSymbol ligSym = new SimpleLineSymbol(0x99990055, 5, SimpleLineSymbol.STYLE.fromString("DASH"));
-
-        // Remove any previous route Graphics
-        mGraphicsLayer.removeGraphic(routeHandle);
-
-        // On ne visualise que l'itinéraire au niveau selectionné :
-        if(geom_intersect_niv0 != null && etg0Selected) {
-            if (!geom_intersect_niv0.isEmpty()) {
-                routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom_intersect_niv0, ligSym));
-                Log.d("geom0_inter_length", ": " + geom_intersect_niv0.calculateLength2D());
-            }
-        }
-
-        if(geom_intersect_niv1 != null && etg1Selected) {
-            if (!geom_intersect_niv1.isEmpty()) {
-                routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom_intersect_niv1, ligSym));
-                Log.d("geom1_inter_length", ": " + geom_intersect_niv1.calculateLength2D());
-            }
-        }
-
-        if(geom_intersect_niv2 != null  && etg2Selected) {
-            if (!geom_intersect_niv2.isEmpty()) {
-                routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom_intersect_niv2, ligSym));
-                Log.d("geom2_inter_length", ": " + geom_intersect_niv2.calculateLength2D());
-            }
-        }
-
-        if(geom!= null && etgsSelected) {
-            if (!geom.isEmpty()) {
-                routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom, ligSym));
-                Log.d("geom_inter_length", ": " + geom.calculateLength2D());
-            }
-        }
-    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -589,27 +416,49 @@ public class MainActivity extends Activity  {
 
         @Override
         public void onItemClick(AdapterView<?> parent, View view,int position, long id) {
+            // Initialisation :
+
+            // Référence spatiale
+            SpatialReference mapRef = mMapView.getSpatialReference();
+
+            // Bolléen (vrai si un point et selectionner, faux sinon) :
+            boolean trouve = false;
+
+            // Définition du symbole des points :
+            Drawable marqueur = getResources().getDrawable(R.drawable.ic_action_marqueur);
+            Symbol symStop = new PictureMarkerSymbol(marqueur);
+
+            // Définition de la géométrie :
+            Geometry ptTest = null;
+
+            // Nombre de point sélectionnés :
+            int tStop = mStops.getFeatures().size();
+
             // Remise à zero des stops :
-            // Our long press will clear the screen
-            mStops.clearFeatures();
-            mGraphicsLayer.removeAll();
-            mMapView.getCallout().hide();
+            // Si il y a plus de deus stops au départ
+            // On supprime réinistiallise la vue et on remet en fonction du bouton sélectionné le départ
+            // ou l'arrivé (on remet le départ si on modifie l'arrivé et inversement)
+            if( tStop >=2 ) {
+                switch(view.getId()) {
+                    case R.id.dep_magasin:
+                        Log.d("switch_dep","OK");
+                        clearAffich();
+                        ajouterPoint(arrive, symStop);
+                        break;
+                    case R.id.arr_magasin:
+                        Log.d("switch_arr","OK");
+                        clearAffich();
+                        ajouterPoint(depart, symStop);
+                        break;
+                }
+            }
 
             // On selectionne le magasin dans la liste de saisie automatique
             String item = parent.getItemAtPosition(position).toString();
-
-            // On l'affiche sur l'ecran
-            Toast.makeText(parent.getContext(), "Selected: " + item, Toast.LENGTH_LONG).show();
-
             Log.v("mag_selectionne",item);
-            // on parcourt la liste récupérer au début dans la geodatabase et on récupère la geometrie
+
+            // On parcourt la liste récupérer au début dans la geodatabase et on récupère la geometrie
             // correspondant au magasin choisie par l'utilisateur
-
-            // Initialisation :
-            boolean trouve = false;
-            Drawable marqueur = getResources().getDrawable(R.drawable.ic_action_marqueur);
-            Geometry ptTest = null;
-
             int len0 = mag_niv0.length;
             for(int k=0; k<len0; k++) {
                 Feature Mag =  mag_niv0[k];
@@ -648,147 +497,35 @@ public class MainActivity extends Activity  {
                 }
             }
 
+            // Lorsque qu'on a trouvé un point
+            // On gère le fait que ce soit le départ ou l'arrivé
+            // Dans tout les cas on l'ajoute au stop et on l'affiche
             if(trouve){
-                SpatialReference mapRef = mMapView.getSpatialReference();
-                depart = geomen.project(ptTest, WKID_RGF93, mapRef);
+                switch(view.getId()) {
+                    case R.id.dep_magasin:
+                        depart = geomen.project(ptTest, WKID_RGF93, mapRef);
+                        ajouterPoint(depart, symStop);
+                        break;
+                    case R.id.arr_magasin:
+                        arrive = geomen.project(ptTest, WKID_RGF93, mapRef);
+                        ajouterPoint(arrive, symStop);
+                        break;
+                }
+                //afficherPpv(mapRef);
+            }
 
-                mGraphicsLayer.addGraphic(new Graphic(depart, new PictureMarkerSymbol(marqueur)));
+            // On récupére à nouveau le nombre de stops
+            tStop = mStops.getFeatures().size();
 
-                StopGraphic stop = new StopGraphic(depart);
-                mStops.addFeature(stop);
-
-                afficherPpv(mapRef);
+            // Si on a 2 stops on calcule et on affiche l'itinéraire
+            if( tStop >= 2) {
+                calculerIti();
             }
         }
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-
-    /**
-     * Fonction qui affiche le magasin le plus proche du point de départ :
-     * @param mapRef
-     */
-    public void afficherPpv(SpatialReference mapRef){
-        Log.d("nivAll","Dedans");
-
-        // Gestion de l'affichage du magasin le plus proche :
-
-        //depart = geomen.project(depart, WKID_RGF93, mapRef);
-
-        // Différence entre le point et les autres magasins
-        Geometry diff_niv0 = geomen.difference(projection_mag_niv0, depart, mapRef);
-        Geometry diff_niv1 = geomen.difference(projection_mag_niv1, depart, mapRef);
-        Geometry diff_niv2 = geomen.difference(projection_mag_niv2, depart, mapRef);
-
-        // Distance géométrique
-        double distance_niv0 = geomen.distance(depart, diff_niv0, mapRef);
-        double distance_niv1 = geomen.distance(depart, diff_niv1, mapRef);
-        double distance_niv2 = geomen.distance(depart, diff_niv2, mapRef);
-
-        Log.d("Dist", "0 : " + distance_niv0 + " 1 : " + distance_niv1 + " 2 : " +distance_niv2);
-
-
-        // Définition de l'unité :
-        Unit meter = Unit.create(LinearUnit.Code.METER);
-
-        // Initialisation des variables utile au calcul du ppv :
-        String texte = null;
-        Geometry mag = null;
-        int taille = 14;
-        double dist_ref = 1000;
-        int color = Color.rgb(255, 1, 1);
-
-        if (niveau == 0){
-            Log.d("niv0","Dedans");
-
-            Polygon buff_niv0 = geomen.buffer(depart, mapRef, distance_niv0, meter);
-            Geometry magasin = geomen.intersect(buff_niv0, projection_mag_niv0, mapRef);
-
-            // On cherhce le magasin le plus proche
-            // c'est-à-dire à la distance minimale du point de départ
-            for (int r=0; r<lst_mag_niveau0.size(); r++){
-                Geometry mag_niv0_r = geomen.project(mag_niv0_geom[r], WKID_RGF93, mapRef);
-                double dist_mag0 = geomen.distance(magasin, mag_niv0_r, mapRef);
-                if (dist_mag0 < dist_ref && dist_mag0!=0){
-                    texte = lst_mag_niveau0.get(r).toString();
-                    mag = geomen.project(mag_niv0_geom[r], WKID_RGF93, mapRef);
-                    dist_ref = dist_mag0;
-                }
-            }
-            Log.d("mag",""+ mag);
-            // Affichage du ppv :
-            if (mag != null) {
-                mGraphicsLayer.addGraphic(new Graphic(mag, new TextSymbol(taille, texte, color)));
-
-                Log.d("niv0_mag!null", "Dedans");
-            }
-
-        } else if (niveau == 1){
-            Log.d("niv1","Dedans");
-
-            Polygon buff_niv1 = geomen.buffer(depart, mapRef, distance_niv1, meter);
-            Geometry magasin = geomen.intersect(buff_niv1, projection_mag_niv1, mapRef);
-
-            for (int r=0; r<lst_mag_niveau1.size(); r++){
-                Geometry mag_niv1_r = geomen.project(mag_niv1_geom[r], WKID_RGF93, mapRef);
-                double dist_mag1 = geomen.distance(magasin, mag_niv1_r, mapRef);
-                // On cherhce le magasin le plus proche
-                // c'est-à-dire à la distance minimale du point de départ
-                if (dist_mag1 < dist_ref && dist_mag1!=0){
-                    texte = lst_mag_niveau1.get(r).toString();
-                    mag = geomen.project(mag_niv1_geom[r], WKID_RGF93, mapRef);
-                    dist_ref = dist_mag1;
-                }
-            }
-            Log.d("mag",""+ mag);
-            // Affichage du ppv :
-            if (mag != null) {
-                mGraphicsLayer.addGraphic(new Graphic(mag, new TextSymbol(taille, texte, color)));
-
-                Log.d("niv1_mag!null", "Dedans");
-            }
-
-        } else if (niveau == 2){
-            Log.d("niv2","Dedans");
-
-            Polygon buff_niv2 = geomen.buffer(depart, mapRef, distance_niv2, meter);
-            Geometry magasin = geomen.intersect(buff_niv2, projection_mag_niv2, mapRef);
-            // On cherhce le magasin le plus proche
-            // c'est-à-dire à la distance minimale du point de départ
-            for (int r=0; r<lst_mag_niveau2.size(); r++){
-                Geometry mag_niv2_r = geomen.project(mag_niv2_geom[r], WKID_RGF93, mapRef);
-                double dist_mag2 = geomen.distance(magasin, mag_niv2_r, mapRef);
-                if (dist_mag2 < dist_ref && dist_mag2!=0){
-                    texte = lst_mag_niveau2.get(r).toString();
-                    mag = geomen.project(mag_niv2_geom[r], WKID_RGF93, mapRef);
-                    dist_ref = dist_mag2;
-                }
-            }
-            Log.d("mag",""+ mag);
-            // Affichage du ppv :
-            if (mag != null) {
-                mGraphicsLayer.addGraphic(new Graphic(mag, new TextSymbol(taille, texte, color)));
-
-                Log.d("niv2_mag!null", "Dedans");
-            }
-        }
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-
-    private void popToast(final String message, final boolean show) {
-        // Simple helper method for showing toast on the main thread
-        if (!show)
-            return;
-
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-
+    //////////////////////////////////// FONCTIONS : ///////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void accesBdd(){
@@ -1019,13 +756,294 @@ public class MainActivity extends Activity  {
             projection_mag_niv2 = geomen.project(mag_niveau2, WKID_RGF93, mapRef);
 
             ////////////////////////////////////////////////////////////////////////////////
+
             // Test :
-            pt_fnac = gdb.getGeodatabaseTables().get(1).getFeature(35).getGeometry();
+
+            depart = gdb.getGeodatabaseTables().get(1).getFeature(35).getGeometry();
+            depart = geomen.project(depart, WKID_RGF93, mapRef);
 
 
         } catch (Exception e) {
             popToast("Error while initializing :" + e.getMessage(), true);
             e.printStackTrace();
         }
+    }
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Fonction qui ajoute une géométrie point au stops et sur le graphe avec le symbole symbol
+     * @param point
+     * @param symbol
+     */
+    public void ajouterPoint(Geometry point, Symbol symbol){
+        mGraphicsLayer.addGraphic(new Graphic(point, symbol));
+        StopGraphic stop = new StopGraphic(point);
+        mStops.addFeature(stop);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Fonction qui réinisitallise l'affichage :
+     */
+    public void clearAffich(){
+        mStops.clearFeatures();
+        mGraphicsLayer.removeAll();
+        mMapView.getCallout().hide();
+    }
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Fonction qui calcule l'tinéraire
+     */
+    public void calculerIti(){
+
+        // Return default behavior if we did not initialize properly.
+        if (mRouteTask == null) {
+            popToast("RouteTask uninitialized.", true);
+        }
+
+        try {
+            // Set the correct input spatial reference on the stops and the
+            // desired output spatial reference on the RouteParameters object.
+            RouteParameters params = mRouteTask.retrieveDefaultRouteTaskParameters();
+            SpatialReference mapRef = mMapView.getSpatialReference();
+            params.setOutSpatialReference(mapRef);
+            mStops.setSpatialReference(mapRef);
+
+            if(estRestreint){
+                String[] restrictions = {"Restriction"};
+                params.setRestrictionAttributeNames(restrictions);
+            } else{
+                String[] restrictions = {""};
+                params.setRestrictionAttributeNames(restrictions);
+            }
+
+            // Set the stops and since we want driving directions,
+            // returnDirections==true
+            params.setStops(mStops);
+            params.setReturnDirections(true);
+
+            // Perform the solve
+            RouteResult results = mRouteTask.solve(params);
+
+            // Grab the results; for offline routing, there will only be one
+            // result returned on the output.
+            Route result = results.getRoutes().get(0);
+
+            ////////////////////////////////////////////////////////////////////////////////////
+
+            // On intersecte l'itinéraire avec les arcs :
+
+            // Add the route shape to the graphics layer
+            geom = result.getRouteGraphic().getGeometry();
+
+            geom_intersect_niv0 = geomen.intersect(geom, projection_niv0, mapRef);
+            geom_intersect_niv1 = geomen.intersect(geom, projection_niv1, mapRef);
+            geom_intersect_niv2 = geomen.intersect(geom, projection_niv2, mapRef);
+
+            ////////////////////////////////////////////////////////////////////////////////////
+
+            //Gestion affichage au moment du calcul d'itinéraire :
+
+            afficherIti();
+
+            ////////////////////////////////////////////////////////////////////////////////////
+            mMapView.getCallout().hide();
+
+        } catch (Exception e) {
+            popToast("Solve Failed: " + e.getMessage(), true);
+            e.printStackTrace();
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Fonction pour afficher l'itinéraire en fonction de l'étage sélectionné
+     */
+    public void afficherIti(){
+        // Défintion symbole pour l'itinéraire :
+        SimpleLineSymbol ligSym = new SimpleLineSymbol(0x99990055, 5, SimpleLineSymbol.STYLE.fromString("DASH"));
+
+        // Remove any previous route Graphics
+        mGraphicsLayer.removeGraphic(routeHandle);
+
+        // On ne visualise que l'itinéraire au niveau selectionné :
+        if(geom_intersect_niv0 != null && etg0Selected) {
+            if (!geom_intersect_niv0.isEmpty()) {
+                routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom_intersect_niv0, ligSym));
+                Log.d("geom0_inter_length", ": " + geom_intersect_niv0.calculateLength2D());
+            }
+        }
+
+        if(geom_intersect_niv1 != null && etg1Selected) {
+            if (!geom_intersect_niv1.isEmpty()) {
+                routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom_intersect_niv1, ligSym));
+                Log.d("geom1_inter_length", ": " + geom_intersect_niv1.calculateLength2D());
+            }
+        }
+
+        if(geom_intersect_niv2 != null  && etg2Selected) {
+            if (!geom_intersect_niv2.isEmpty()) {
+                routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom_intersect_niv2, ligSym));
+                Log.d("geom2_inter_length", ": " + geom_intersect_niv2.calculateLength2D());
+            }
+        }
+
+        if(geom!= null && etgsSelected) {
+            if (!geom.isEmpty()) {
+                routeHandle = mGraphicsLayer.addGraphic(new Graphic(geom, ligSym));
+                Log.d("geom_inter_length", ": " + geom.calculateLength2D());
+            }
+        }
+    }
+
+
+    /**
+     * Fonction qui affiche le magasin le plus proche du point de départ :
+     * @param mapRef
+     */
+    public void afficherPpv(SpatialReference mapRef){
+        Log.d("nivAll","Dedans");
+
+        // Gestion de l'affichage du magasin le plus proche :
+
+        //depart = geomen.project(depart, WKID_RGF93, mapRef);
+
+        // Différence entre le point et les autres magasins
+        Geometry diff_niv0 = geomen.difference(projection_mag_niv0, depart, mapRef);
+        Geometry diff_niv1 = geomen.difference(projection_mag_niv1, depart, mapRef);
+        Geometry diff_niv2 = geomen.difference(projection_mag_niv2, depart, mapRef);
+
+        Log.d("Diff", "0 : " + diff_niv0 + " 1 : " + diff_niv1 + " 2 : " + diff_niv2);
+
+        // Distance géométrique
+        double distance_niv0 = geomen.distance(depart, diff_niv0, mapRef);
+        double distance_niv1 = geomen.distance(depart, diff_niv1, mapRef);
+        double distance_niv2 = geomen.distance(depart, diff_niv2, mapRef);
+
+        Log.d("Dist", "0 : " + distance_niv0 + " 1 : " + distance_niv1 + " 2 : " + distance_niv2);
+
+
+        // Définition de l'unité :
+        Unit meter = Unit.create(LinearUnit.Code.METER);
+
+        // Initialisation des variables utile au calcul du ppv :
+        String texte = null;
+        Geometry mag = null;
+        int taille = 14;
+        double dist_ref = 1000;
+        int color = Color.rgb(255, 1, 1);
+
+        if (niveau == 0){
+            Log.d("niv0","Dedans");
+
+            Polygon buff_niv0 = geomen.buffer(depart, mapRef, distance_niv0, meter);
+            Geometry magasin = geomen.intersect(buff_niv0, projection_mag_niv0, mapRef);
+
+            // On cherhce le magasin le plus proche
+            // c'est-à-dire à la distance minimale du point de départ
+            for (int r=0; r<lst_mag_niveau0.size(); r++){
+                Geometry mag_niv0_r = geomen.project(mag_niv0_geom[r], WKID_RGF93, mapRef);
+                double dist_mag0 = geomen.distance(mag_niv0_r,magasin, mapRef);
+
+                Log.d("magasin",""+magasin);
+                Log.d("mag_niv0_r",""+mag_niv0_r);
+                Log.d("dist_mag0",""+dist_mag0);
+
+
+                if (dist_mag0 < dist_ref && dist_mag0!=0){
+                    texte = lst_mag_niveau0.get(r).toString();
+                    mag = geomen.project(mag_niv0_geom[r], WKID_RGF93, mapRef);
+                    dist_ref = dist_mag0;
+                }
+            }
+            Log.d("mag",""+ mag);
+            // Affichage du ppv :
+            if (mag != null) {
+                mGraphicsLayer.addGraphic(new Graphic(mag, new TextSymbol(taille, texte, color)));
+
+                Log.d("niv0_mag!null", "Dedans");
+            }
+
+        } else if (niveau == 1){
+            Log.d("niv1","Dedans");
+
+            Polygon buff_niv1 = geomen.buffer(depart, mapRef, distance_niv1, meter);
+            Geometry magasin = geomen.intersect(buff_niv1, projection_mag_niv1, mapRef);
+
+            for (int r=0; r<lst_mag_niveau1.size(); r++){
+                Geometry mag_niv1_r = geomen.project(mag_niv1_geom[r], WKID_RGF93, mapRef);
+                double dist_mag1 = geomen.distance(mag_niv1_r, magasin, mapRef);
+
+                Log.d("magasin",""+magasin);
+                Log.d("mag_niv1_r",""+mag_niv1_r);
+                Log.d("dist_mag1",""+dist_mag1);
+
+
+                // On cherhce le magasin le plus proche
+                // c'est-à-dire à la distance minimale du point de départ
+                if (dist_mag1 < dist_ref && dist_mag1!=0){
+                    texte = lst_mag_niveau1.get(r).toString();
+                    mag = geomen.project(mag_niv1_geom[r], WKID_RGF93, mapRef);
+                    dist_ref = dist_mag1;
+                }
+            }
+            Log.d("mag",""+ mag);
+            // Affichage du ppv :
+            if (mag != null) {
+                mGraphicsLayer.addGraphic(new Graphic(mag, new TextSymbol(taille, texte, color)));
+
+                Log.d("niv1_mag!null", "Dedans");
+            }
+
+        } else if (niveau == 2){
+            Log.d("niv2","Dedans");
+
+            Polygon buff_niv2 = geomen.buffer(depart, mapRef, distance_niv2, meter);
+            Geometry magasin = geomen.intersect(buff_niv2, projection_mag_niv2, mapRef);
+
+            // On cherhce le magasin le plus proche
+            // c'est-à-dire à la distance minimale du point de départ
+            for (int r=0; r<lst_mag_niveau2.size(); r++){
+                Geometry mag_niv2_r = geomen.project(mag_niv2_geom[r], WKID_RGF93, mapRef);
+                double dist_mag2 = geomen.distance(mag_niv2_r, magasin, mapRef);
+
+                Log.d("magasin",""+magasin);
+                Log.d("mag_niv1_r",""+mag_niv2_r);
+                Log.d("dist_mag1",""+dist_mag2);
+
+                if (dist_mag2 < dist_ref && dist_mag2!=0){
+                    texte = lst_mag_niveau2.get(r).toString();
+                    mag = geomen.project(mag_niv2_geom[r], WKID_RGF93, mapRef);
+                    dist_ref = dist_mag2;
+                }
+            }
+            Log.d("mag",""+ mag);
+            // Affichage du ppv :
+            if (mag != null) {
+                mGraphicsLayer.addGraphic(new Graphic(mag, new TextSymbol(taille, texte, color)));
+
+                Log.d("niv2_mag!null", "Dedans");
+            }
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    private void popToast(final String message, final boolean show) {
+        // Simple helper method for showing toast on the main thread
+        if (!show)
+            return;
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }
