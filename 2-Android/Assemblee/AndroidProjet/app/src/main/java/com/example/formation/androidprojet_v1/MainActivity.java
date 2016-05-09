@@ -231,7 +231,7 @@ public class MainActivity extends Activity  {
         checkBoxRes = (CheckBox)findViewById(R.id.checkBoxRes);
         String resTxt = getResources().getString(R.string.rest);
         checkBoxRes.setText(resTxt);
-        checkBoxRes.setOnClickListener(checkedListener);
+        checkBoxRes.setOnClickListener(new checkedListener());
 
         // Récupération des élémenst dans la bdd :
         accesBdd();
@@ -317,20 +317,23 @@ public class MainActivity extends Activity  {
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
-    * Listener du bouton de la restriction.
+     * Listener du bouton de la restriction.
      * */
-    private View.OnClickListener checkedListener = new View.OnClickListener() {
+    class checkedListener implements View.OnClickListener {
+
         @Override
         public void onClick(View v) {
-            if(((CheckBox)v).isChecked()) {
+            if (((CheckBox) v).isChecked()) {
                 estRestreint = true;
-            }else{
+                clearAffich();
+                calculerIti();
+            } else {
                 estRestreint = false;
+                clearAffich();
+                calculerIti();
             }
         }
-    };
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
+    }
 
 
     /**
@@ -447,6 +450,7 @@ public class MainActivity extends Activity  {
             // On supprime réinistiallise la vue et on remet en fonction du bouton sélectionné le départ
             // ou l'arrivé (on remet le départ si on modifie l'arrivé et inversement)
             if( tStop >=2 ) {
+                mStops.clearFeatures();
                 clearAffich();
                 ajouterPoint(depart, symStop);
             }
@@ -459,7 +463,7 @@ public class MainActivity extends Activity  {
             if (ptTest !=null){
                 trouve = true;
             }
-            
+
             // Lorsque qu'on a trouvé un point
             // On gère le fait que ce soit le départ ou l'arrivé
             // Dans tout les cas on l'ajoute au stop et on l'affiche
@@ -508,6 +512,7 @@ public class MainActivity extends Activity  {
             // On supprime réinistiallise la vue et on remet en fonction du bouton sélectionné le départ
             // ou l'arrivé (on remet le départ si on modifie l'arrivé et inversement)
             if( tStop >=2 ) {
+                mStops.clearFeatures();
                 clearAffich();
                 ajouterPoint(depart, symStop);
             }
@@ -859,7 +864,6 @@ public class MainActivity extends Activity  {
      * Fonction qui réinisitallise l'affichage :
      */
     public void clearAffich(){
-        mStops.clearFeatures();
         mGraphicsLayer.removeAll();
         mMapView.getCallout().hide();
     }
