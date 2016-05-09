@@ -7,7 +7,12 @@ import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Environment;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
@@ -64,13 +69,17 @@ import java.util.Map;
 import java.util.Vector;
 
 
-public class MainActivity extends Activity  {
+public class MainActivity extends AppCompatActivity {
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////// VARIABLES : ///////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
      * Déclaration des variables globales :
      */
 
-    // Define ArcGIS Elements
+    //////////////////////////////////// ArcGIS Elements : /////////////////////////////////////////
     private MapView mMapView;
 
     private final String extern = Environment.getExternalStorageDirectory().getPath();
@@ -84,8 +93,8 @@ public class MainActivity extends Activity  {
     private final String chTpk = "/Android/data/com.example.formation.androidprojet_v1/ArcGIS/";
     */
 
-    // Variable pour image de fond :
-    private String tpkPath = chTpk +"arcades.tpk";
+    //////////////////////////////////// Image de fond  : //////////////////////////////////////////
+    private String tpkPath  = chTpk +"arcades.tpk";
     private String tpkPath0 = chTpk +"niveau_0.tpk";
     private String tpkPath1 = chTpk +"niveau_1.tpk";
     private String tpkPath2 = chTpk +"niveau_2.tpk";
@@ -100,19 +109,30 @@ public class MainActivity extends Activity  {
     private RouteTask mRouteTask = null;
     private NAFeaturesAsFeature mStops = new NAFeaturesAsFeature();
 
-    private Locator mLocator = null;
-    private Spinner dSpinner;
+    //////////////////////////////////// Symbole départ/arrivé : ///////////////////////////////////
+    Drawable marqueur;
+    Symbol symStop;
 
-    // Variables utiles pour la gestion du multi-étage :
-    Spinner spinnerEtgSel;
+    //////////////////////////////////// Gestion du multi-étage : //////////////////////////////////
+    private Spinner spinnerEtgSel;
     private boolean etgsSelected = false;
     private boolean etg0Selected = false;
     private boolean etg1Selected = false;
     private boolean etg2Selected = false;
 
-    // Variables utiles à la gestion du QR_code :
+    //////////////////////////////////// Gestion du QR code : //////////////////////////////////////
     private Geometry geom_QR_code = null;
 
+    //////////////////////////////////// Récupération des arcs : ///////////////////////////////////
+    // Géometries :
+    private Geometry[] array_geom_niv0 = new Geometry[127];
+    private Geometry[] array_geom_niv1_1 = new Geometry[380];
+    private Geometry[] array_geom_niv1_2 = new Geometry[377];
+    private Geometry[] array_geom_niv2_1 = new Geometry[380];
+    private Geometry[] array_geom_niv2_2 = new Geometry[400];
+    private Geometry[] array_geom_niv1 = new Geometry[2];
+    private Geometry[] array_geom_niv2 = new Geometry[2];
+    // Projection
     private Geometry projection_niv0 = null;
     private Geometry projection_niv1 = null;
     private Geometry projection_niv2 = null;
@@ -120,19 +140,19 @@ public class MainActivity extends Activity  {
     private Geometry geometries_niveau0 = null;
     private Geometry geometries_niveau1 = null;
     private Geometry geometries_niveau2 = null;
-    // Géomtrie intersections :
+    // Geometrie intersections :
     private Geometry geom = null;
     private Geometry geom_intersect_niv0 = null;
     private Geometry geom_intersect_niv1 = null;
     private Geometry geom_intersect_niv2 = null;
 
-    // Définiton géométrie engine :
+    //////////////////////////////////// Géométrie engine : ////////////////////////////////////////
     private GeometryEngine geomen = new GeometryEngine();
 
-    // Référence spatiale :
+    //////////////////////////////////// Référence spatiale : //////////////////////////////////////
     private SpatialReference WKID_RGF93 = SpatialReference.create(102110);
 
-    // Variables utiles pour la récupération des magasins :
+    //////////////////////////////////// Récupération des magasins : ///////////////////////////////
     // Features :
     private Feature[] mag_niv0 = new Feature[12];
     private Feature[] mag_niv1 = new Feature[66];
@@ -150,51 +170,50 @@ public class MainActivity extends Activity  {
     private Geometry mag_niveau1 = null;
     private Geometry mag_niveau2 = null;
     // Liste nom  :
-    private List lst_mag_niveau0 = new Vector();
-    private List lst_mag_niveau1 = new Vector();
-    private List lst_mag_niveau2 = new Vector();
+    private ArrayList lst_mag_niveau0 = new ArrayList();
+    private ArrayList lst_mag_niveau1 = new ArrayList();
+    private ArrayList lst_mag_niveau2 = new ArrayList();
     // Liste type  :
-    private List lst_types_niveau0 = new Vector();
-    private List lst_types_niveau1 = new Vector();
-    private List lst_types_niveau2 = new Vector();
+    private ArrayList lst_types_niveau0 = new ArrayList();
+    private ArrayList lst_types_niveau1 = new ArrayList();
+    private ArrayList lst_types_niveau2 = new ArrayList();
     // Test
     private Geometry pt_fnac = null;
 
-    // Variables utiles à la récupérations des arcs :
-    // Géometries :
-    private Geometry[] array_geom_niv0 = new Geometry[127];
-    private Geometry[] array_geom_niv1_1 = new Geometry[380];
-    private Geometry[] array_geom_niv1_2 = new Geometry[377];
-    private Geometry[] array_geom_niv2_1 = new Geometry[380];
-    private Geometry[] array_geom_niv2_2 = new Geometry[400];
-    private Geometry[] array_geom_niv1 = new Geometry[2];
-    private Geometry[] array_geom_niv2 = new Geometry[2];
-
-    // Gestion itinéraire :
+    //////////////////////////////////// Gestion itinéraire  : /////////////////////////////////////
     private int routeHandle = -1;
 
-    // Variable de restrictions :
+    //////////////////////////////////// Variable de restrictions : ////////////////////////////////
     private CheckBox checkBoxRes = null;
     private boolean estRestreint = false;
 
-    //Saisie auto :
+    //////////////////////////////////// Saisie automatique  :  ////////////////////////////////////
     private List lst_nom_mag = new ArrayList();
     private AutoCompleteTextView textViewArr;
     private AutoCompleteTextView textViewDep;
 
-    //Ppv :
+    //////////////////////////////////// Plus proche vosisin  :  ///////////////////////////////////
     private int niveau_dep = 0;
     private int niveau_arr = 0;
 
-    // Définition des points de départ et d'arrivé :
+    //////////////////////////////////// Points de départ et d'arrivé :  ///////////////////////////
     private Geometry depart;
     private Geometry arrive;
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////// METHODES : ////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // Toolbar pour l'option itinéraire
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        ActionBar actionBar = getSupportActionBar();
+        actionBar.setDisplayHomeAsUpEnabled(true);
 
         // Spinner element pour changement etage
         spinnerEtgSel = (Spinner) findViewById(R.id.spinnerEtgSelc);
@@ -205,9 +224,9 @@ public class MainActivity extends Activity  {
         Log.d("RoutingAndGeocoding", "Find tpk: " + tpk.exists());
         Log.d("RoutingAndGeocoding", "Initialized tpk: " + mTileLayer.isInitialized());
 
-        // Find the directions spinner
-        dSpinner = (Spinner) findViewById(R.id.directionsSpinner);
-        dSpinner.setEnabled(false);
+        // Création symbole point départ/arrivé :
+        marqueur = getResources().getDrawable(R.drawable.ic_action_marqueur);
+        symStop = new PictureMarkerSymbol(marqueur);
 
         // Retrieve the map and initial extent from XML layout
         mMapView = (MapView) findViewById(R.id.map);
@@ -307,10 +326,91 @@ public class MainActivity extends Activity  {
             if(scanContent.equals( "QR code 03" ) ) {Log.d("QR_code","QR code 03");}
         }
         else{
-            Toast toast = Toast.makeText(getApplicationContext(),
-                    "Aucune donnée reçu!", Toast.LENGTH_SHORT);
-            toast.show();
+            if (requestCode == 0) {
+                Log.d("coucou","");
+                if (resultCode == RESULT_OK){
+                    final String mag_dep = intent.getStringExtra("Depart");
+                    final String mag_arr = intent.getStringExtra("Arrivee");
+
+                    SpatialReference mapRef = mMapView.getSpatialReference();
+
+                    int tStop = mStops.getFeatures().size();
+
+                    if( tStop >=2 ) {
+                        mStops.clearFeatures();
+                        clearAffich();
+                        ajouterPoint(depart, symStop);
+                    }
+
+                    Geometry ptDep = trouverPtSel(mag_dep, true);
+                    depart = geomen.project(ptDep, WKID_RGF93, mapRef);
+                    ajouterPoint(depart, symStop);
+
+                    Geometry ptArr =trouverPtSel(mag_arr, false);
+                    arrive = geomen.project(ptArr, WKID_RGF93, mapRef);
+                    ajouterPoint(arrive, symStop);
+
+                    tStop = mStops.getFeatures().size();
+
+                    // Si on a 2 stops on calcule et on affiche l'itinéraire
+                    if( tStop >= 2) {
+                        calculerIti(mapRef);
+                        afficherPpv(mapRef);
+                    }
+
+                    // Todo enlever l'intent
+
+                    /*
+                    final String niv_ar = intent.getStringExtra("Niv_ar");
+                    final String niv_dep = intent.getStringExtra("Niv_dep");
+                    if (niv_dep == "0") {
+                        for (int s = 0; s < lst_mag_niveau0.size(); s++) {
+                            if (lst_mag_niveau0.get(s).toString().equals(mag_dep)) {
+
+                            }
+                        }
+                    }
+                    if (niv_dep == "1") {
+                        for (int s = 0; s < lst_mag_niveau1.size(); s++) {
+                            if (lst_mag_niveau1.get(s).toString().equals(mag_dep)) {
+
+                            }
+                        }
+                    }
+                    if (niv_dep == "2") {
+                        for (int s = 0; s < lst_mag_niveau2.size(); s++) {
+                            if (lst_mag_niveau2.get(s).toString().equals(mag_dep)) {
+
+                            }
+                        }
+                    }
+                    if (niv_ar == "0") {
+                        for (int s = 0; s < lst_mag_niveau0.size(); s++) {
+                            if (lst_mag_niveau0.get(s).toString().equals(mag_arr)) {
+
+                            }
+                        }
+                    }
+                    if (niv_ar == "1") {
+                        for (int s = 0; s < lst_mag_niveau1.size(); s++) {
+                            if (lst_mag_niveau1.get(s).toString().equals(mag_arr)) {
+
+                            }
+                        }
+                    }
+                    if (niv_ar == "2") {
+                        for (int s = 0; s < lst_mag_niveau2.size(); s++) {
+                            if (lst_mag_niveau2.get(s).toString().equals(mag_arr)) {
+
+                            }
+                        }
+                    }
+                    */
+
+                }
+            }
         }
+
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -428,17 +528,12 @@ public class MainActivity extends Activity  {
 
         @Override
         public void onItemClick(AdapterView<?> parent, View view,int position, long id) {
-            Log.d("View_id",""+view.getId());
             // Initialisation :
             // Référence spatiale :
             SpatialReference mapRef = mMapView.getSpatialReference();
 
             // Bolléen (vrai si un point est selectionné, faux sinon) :
             boolean trouve = false;
-
-            // Définition du symbole des points :
-            Drawable marqueur = getResources().getDrawable(R.drawable.ic_action_marqueur);
-            Symbol symStop = new PictureMarkerSymbol(marqueur);
 
             // Définition de la géométrie :
             Geometry ptTest = null;
@@ -497,10 +592,6 @@ public class MainActivity extends Activity  {
 
             // Bolléen (vrai si un point est selectionné, faux sinon) :
             boolean trouve = false;
-
-            // Définition du symbole des points :
-            Drawable marqueur = getResources().getDrawable(R.drawable.ic_action_marqueur);
-            Symbol symStop = new PictureMarkerSymbol(marqueur);
 
             // Définition de la géométrie :
             Geometry ptTest = null;
@@ -567,7 +658,6 @@ public class MainActivity extends Activity  {
 
         // Attempt to load the local geocoding and routing data
         try {
-            mLocator = Locator.createLocalLocator(extern + locatorPath);
             mRouteTask = RouteTask.createLocalRouteTask(extern + networkPath, networkName);
 
             ////////////////////////////////////////////////////////////////////////////////
@@ -1104,6 +1194,46 @@ public class MainActivity extends Activity  {
             }
         }
     }
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Toolbar:
+     */
+
+     @Override
+     public boolean onCreateOptionsMenu(Menu menu) {
+         // Inflate the menu; this adds items to the action bar if it is present.
+             getMenuInflater().inflate(R.menu.menu_main, menu);
+             return true;
+         }
+
+         private void choix(){
+             Intent intent_choix = new Intent(MainActivity.this, Choix.class);
+             intent_choix.putExtra("Liste_mag0", lst_mag_niveau0);
+             intent_choix.putExtra("Liste_mag1", lst_mag_niveau1);
+             intent_choix.putExtra("Liste_mag2", lst_mag_niveau2);
+             intent_choix.putExtra("Liste_type0", lst_types_niveau0);
+             intent_choix.putExtra("Liste_type1", lst_types_niveau1);
+             intent_choix.putExtra("Liste_type2", lst_types_niveau2);
+
+             startActivityForResult(intent_choix, 0);
+         }
+
+         @Override
+         public boolean onOptionsItemSelected(MenuItem item) {
+             // Handle action bar item clicks here. The action bar will
+             // automatically handle clicks on the Home/Up button, so long
+             // as you specify a parent activity in AndroidManifest.xml.
+             int id = item.getItemId();
+
+             //noinspection SimplifiableIfStatement
+             if (id == R.id.action_choix) {
+                 choix();
+                 return true;
+             }
+
+         return super.onOptionsItemSelected(item);
+     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
 

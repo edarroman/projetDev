@@ -277,9 +277,13 @@ public class MainActivity extends AppCompatActivity {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
+
+
     /**
      * Gestion des QR codes :
      */
+
+    /**
 
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
         // Nous utilisons la classe IntentIntegrator et sa fonction parseActivityResult pour parser le résultat du scan
@@ -322,6 +326,7 @@ public class MainActivity extends AppCompatActivity {
                 if (resultCode == RESULT_OK){
                     final String mag_dep = intent.getStringExtra("Depart");
                     final String mag_arr = intent.getStringExtra("Arrivee");
+                    // Todo gerer niceau _dep 
                     final String niv_ar = intent.getStringExtra("Niv_ar");
                     final String niv_dep = intent.getStringExtra("Niv_dep");
                     if (niv_dep == "0") {
@@ -372,6 +377,8 @@ public class MainActivity extends AppCompatActivity {
         }
 
     }
+
+    **/
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1117,9 +1124,11 @@ public class MainActivity extends AppCompatActivity {
     };
 
     //////////////////////////////////////////////////////////////////////////
+    
     /**
      * Toolbar:
      */
+    /**
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -1154,4 +1163,5 @@ public class MainActivity extends AppCompatActivity {
 
         return super.onOptionsItemSelected(item);
     }
+    **/
 }
