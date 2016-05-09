@@ -21,6 +21,7 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -191,6 +192,9 @@ public class MainActivity extends AppCompatActivity {
     private CheckBox checkBoxRes = null;
     private boolean estRestreint = false;
 
+    // Variable Qr code
+    private ImageView qrButton;
+
     //Saisie auto :
     List lst_nom_mag = new ArrayList();
 
@@ -242,20 +246,17 @@ public class MainActivity extends AppCompatActivity {
         mMapView.addLayer(mGraphicsLayer);
 
         //Restriction :
-        checkBoxRes = (CheckBox)findViewById(R.id.checkBoxRes);
-        String resTxt = getResources().getString(R.string.rest);
-        checkBoxRes.setText(resTxt);
+        checkBoxRes = (CheckBox)findViewById(R.id.handicap);
         checkBoxRes.setOnClickListener(checkedListener);
+
+        // QR code
+        qrButton = (ImageView) findViewById(R.id.scan_button);
+        qrButton.setOnClickListener(qrclick);
 
         // Initialize the RouteTask and Locator with the local data
         accesBdd();
         mMapView.setOnTouchListener(new TouchListener(MainActivity.this, mMapView));
 
-        // QR code
-        Button qrButton = (Button) findViewById(R.id.scan_button);
-        String qrTxt = getResources().getString(R.string.qr);
-        qrButton.setText(qrTxt);
-        qrButton.setOnClickListener(new BoutonQRcodeListener());
 
         // Saisie automatique
         //final ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,android.R.layout.simple_dropdown_item_1line, lst_nom_mag);
@@ -736,21 +737,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-
-    class BoutonQRcodeListener implements View.OnClickListener {
-
-        //QR code
+    // Bouton qr code
+    private View.OnClickListener qrclick = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            //QR code
-            if (v.getId() == R.id.scan_button) {
-                // on lance le scanner au clic sur notre bouton
-                IntentIntegrator integrator = new IntentIntegrator(MainActivity.this);
-                integrator.initiateScan();
-                //new IntentIntegrator(this).initiateScan();
-            }
-        }
-    }
+            // on lance le scanner au clic sur notre bouton
+            IntentIntegrator integrator = new IntentIntegrator(MainActivity.this);
+            integrator.initiateScan();
+        };
+    };
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
 

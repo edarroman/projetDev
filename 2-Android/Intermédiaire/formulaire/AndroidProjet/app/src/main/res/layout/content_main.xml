@@ -34,12 +34,7 @@
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true" />
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/scan_button"
-        android:layout_below="@+id/directionsSpinner"
-        android:layout_centerHorizontal="true" />
+
 
     <TextView
         android:layout_width="wrap_content"
@@ -58,10 +53,16 @@
         android:layout_centerHorizontal="true" />
 
     <CheckBox
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/checkBoxRes"
-        android:checked="false" />
+        android:layout_width="50px"
+        android:layout_height="50px"
+        android:id="@+id/handicap"
+        android:checked="false"
+        android:button="@drawable/checked"
+        android:layout_above="@+id/scan_button"
+        android:layout_alignRight="@+id/map"
+        android:layout_alignEnd="@+id/map"
+        android:layout_alignLeft="@+id/scan_button"
+        android:layout_alignStart="@+id/scan_button" />
 
     <Button
         android:layout_width="wrap_content"
@@ -81,6 +82,16 @@
         <requestFocus />
 
     </AutoCompleteTextView>
+
+    <ImageView
+        android:layout_width="50px"
+        android:layout_height="50px"
+        android:id="@+id/scan_button"
+        android:clickable="true"
+        android:src="@drawable/qr1"
+        android:layout_above="@+id/spinner1"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true" />
 
 
 </RelativeLayout>
