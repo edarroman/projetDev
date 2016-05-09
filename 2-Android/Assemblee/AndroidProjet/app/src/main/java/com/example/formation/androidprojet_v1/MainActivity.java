@@ -1,7 +1,5 @@
 package com.example.formation.androidprojet_v1;
 
-import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
@@ -13,7 +11,6 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
@@ -27,7 +24,6 @@ import android.widget.Toast;
 
 import com.esri.android.map.GraphicsLayer;
 import com.esri.android.map.GraphicsLayer.RenderingMode;
-import com.esri.android.map.MapOnTouchListener;
 import com.esri.android.map.MapView;
 import com.esri.android.map.TiledLayer;
 import com.esri.android.map.ags.ArcGISLocalTiledLayer;
@@ -36,7 +32,6 @@ import com.esri.core.geodatabase.GeodatabaseFeatureTable;
 import com.esri.core.geometry.Geometry;
 import com.esri.core.geometry.GeometryEngine;
 import com.esri.core.geometry.LinearUnit;
-import com.esri.core.geometry.Point;
 import com.esri.core.geometry.Polygon;
 import com.esri.core.geometry.Polyline;
 import com.esri.core.geometry.SpatialReference;
@@ -49,9 +44,6 @@ import com.esri.core.symbol.SimpleMarkerSymbol;
 import com.esri.core.symbol.SimpleMarkerSymbol.STYLE;
 import com.esri.core.symbol.Symbol;
 import com.esri.core.symbol.TextSymbol;
-import com.esri.core.table.TableException;
-import com.esri.core.tasks.geocode.Locator;
-import com.esri.core.tasks.geocode.LocatorReverseGeocodeResult;
 import com.esri.core.tasks.na.NAFeaturesAsFeature;
 import com.esri.core.tasks.na.Route;
 import com.esri.core.tasks.na.RouteParameters;
@@ -62,11 +54,9 @@ import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Vector;
 
 
 public class MainActivity extends AppCompatActivity {
