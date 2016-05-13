@@ -278,7 +278,6 @@ public class MainActivity extends AppCompatActivity {
         // Récupération des élémenst dans la bdd :
         accesBdd();
 
-
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -291,13 +290,13 @@ public class MainActivity extends AppCompatActivity {
      */
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
 
-        //////////////////////////////////// QR code :  ////////////////////////////////////////////
-
         // Nous utilisons la classe IntentIntegrator et sa fonction parseActivityResult pour parser le résultat du scan
         IntentResult scanningResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, intent);
 
         // Récupération de la référence spatiale de  la vue :
         SpatialReference mapRef = mMapView.getSpatialReference();
+
+        //////////////////////////////////// QR code :  ////////////////////////////////////////////
 
         if (scanningResult != null) {
             // Nous récupérons le contenu du code barre
@@ -339,16 +338,16 @@ public class MainActivity extends AppCompatActivity {
                     final String mag_dep = intent.getStringExtra("Depart");
                     final String mag_arr = intent.getStringExtra("Arrivee");
 
-                    // On compte le nombre de points présent dans stop
+                    // On compte le nombre de points présents dans mStops :
                     int tStop = mStops.getFeatures().size();
 
-                    // Si il y en a plus de deux on réinistiallise les stops :
+                    // Si il y en a plus de deux on réinistialise les stops :
                     if( tStop >=2 ) {
                         mStops.clearFeatures();
                         clearAffich();
                     }
 
-                    // On retrouve lles points de départ et d'arrivé à l'aide de leurs noms dans la liste de magasin
+                    // On retrouve les points de départ et d'arrivé à l'aide de leurs noms dans la liste de magasin
                     Geometry ptDep = trouverPtSel(mag_dep, true);
                     depart = geomen.project(ptDep, WKID_RGF93, mapRef);
                     ajouterPoint(depart, symStop);
@@ -357,7 +356,7 @@ public class MainActivity extends AppCompatActivity {
                     arrive = geomen.project(ptArr, WKID_RGF93, mapRef);
                     ajouterPoint(arrive, symStop);
 
-                    // On récupéère à nouveua le noombre de stop :
+                    // On récupére à nouveau le nombre de stop :
                     tStop = mStops.getFeatures().size();
 
                     // Si on a 2 stops on calcule et on affiche l'itinéraire
@@ -396,7 +395,7 @@ public class MainActivity extends AppCompatActivity {
             if (((CheckBox) v).isChecked()) {estRestreint = true;}
             else {estRestreint = false;}
 
-            // On cllear ce qui est affiché et on recalcule l'itinéraire avec la restriction
+            // On clear ce qui est affiché et on recalcule l'itinéraire avec la restriction
             clearAffich();
             calculerIti(mapRef);
         }
@@ -515,7 +514,7 @@ public class MainActivity extends AppCompatActivity {
             if( tStop >=2 ) {
                 mStops.clearFeatures();
                 clearAffich();
-                ajouterPoint(depart, symStop);
+                ajouterPoint(arrive, symStop);
             }
 
             // On selectionne le magasin dans la liste de saisie automatique
