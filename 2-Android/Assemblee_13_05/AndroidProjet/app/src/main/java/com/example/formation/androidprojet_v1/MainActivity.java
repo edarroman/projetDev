@@ -361,7 +361,7 @@ public class MainActivity extends AppCompatActivity {
                     arrive = geomen.project(ptArr, WKID_RGF93, mapRef);
                     ajouterPoint(arrive, symStop);
 
-                    // On récupéère à nouveua le noombre de stop :
+                    // On récupère à nouveau le nombre de stop :
                     tStop = mStops.getFeatures().size();
 
                     // Si on a 2 stops on calcule et on affiche l'itinéraire
@@ -420,7 +420,7 @@ public class MainActivity extends AppCompatActivity {
             // Showing selected spinner item
             Toast.makeText(parent.getContext(), etageSelec + " sélectionné", Toast.LENGTH_LONG).show();
 
-            // On recupere les noms des etages qui sont stockés dans ressources.strings.values
+            // On recupère les noms des étages qui sont stockés dans ressources.strings.values
             String[] nom_etage = getResources().getStringArray(R.array.etage_array);
 
             // Test suivant la selection de l'utilisateur:
@@ -493,8 +493,8 @@ public class MainActivity extends AppCompatActivity {
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * Listener bouton saise auto
-     * Il y en a deux car aucun moyen de récupérere facilement l'id de l(AutoCompleteTextView sur laquelle on clique
+     * Listener bouton saisie auto
+     * Il y en a deux car aucun moyen de récupérer facilement l'id de l'AutoCompleteTextView sur laquelle on clique
      */
 
     //////////////////////////////////// Départ :  /////////////////////////////////////////////////
@@ -520,13 +520,13 @@ public class MainActivity extends AppCompatActivity {
             //////////////////////////////////// Initinéraire :  ///////////////////////////////////
 
             // Remise à zero des stops :
-            // Si il y a plus de deus stops au départ
-            // On supprime réinistiallise la vue et on remet en fonction du bouton sélectionné le départ
-            // ou l'arrivé (on remet le départ si on modifie l'arrivé et inversement)
+            // Si il y a plus de deux stops au départ
+            // On supprime réinitialise la vue et on remet en fonction du bouton sélectionné le départ
+            // ou l'arrivée (on remet le départ si on modifie l'arrivée et inversement)
             if( tStop >=2 ) {
                 mStops.clearFeatures();
                 clearAffich();
-                ajouterPoint(depart, symStop);
+                ajouterPoint(arrive, symStop);
             }
 
             // On selectionne le magasin dans la liste de saisie automatique
@@ -539,14 +539,14 @@ public class MainActivity extends AppCompatActivity {
             }
 
             // Lorsque qu'on a trouvé un point
-            // On gère le fait que ce soit le départ ou l'arrivé
+            // On gère le fait que ce soit le départ ou l'arrivée
             // Dans tout les cas on l'ajoute au stop et on l'affiche
             if(trouve){
                 depart = geomen.project(ptTest, WKID_RGF93, mapRef);
                 ajouterPoint(depart, symStop);
             }
 
-            // On récupére à nouveau le nombre de stops
+            // On récupère à nouveau le nombre de stops
             tStop = mStops.getFeatures().size();
 
             // Si on a 2 stops on calcule et on affiche l'itinéraire
@@ -568,7 +568,7 @@ public class MainActivity extends AppCompatActivity {
             // Référence spatiale :
             SpatialReference mapRef = mMapView.getSpatialReference();
 
-            // Bolléen (vrai si un point est selectionné, faux sinon) :
+            // Boolléen (vrai si un point est selectionné, faux sinon) :
             boolean trouve = false;
 
             // Définition de la géométrie :
@@ -580,9 +580,9 @@ public class MainActivity extends AppCompatActivity {
             //////////////////////////////////// Initinéraire :  ///////////////////////////////////
 
             // Remise à zero des stops :
-            // Si il y a plus de deus stops au départ
-            // On supprime réinistiallise la vue et on remet en fonction du bouton sélectionné le départ
-            // ou l'arrivé (on remet le départ si on modifie l'arrivé et inversement)
+            // Si il y a plus de deux stops au départ
+            // On supprime réinitialise la vue et on remet en fonction du bouton sélectionné le départ
+            // ou l'arrivée (on remet le départ si on modifie l'arrivée et inversement)
             if( tStop >=2 ) {
                 mStops.clearFeatures();
                 clearAffich();
@@ -599,7 +599,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             // Lorsque qu'on a trouvé un point
-            // On gère le fait que ce soit le départ ou l'arrivé
+            // On gère le fait que ce soit le départ ou l'arrivée
             // Dans tout les cas on l'ajoute au stop et on l'affiche
             if(trouve){
                 Log.d("if_arr", "OK");
@@ -607,7 +607,7 @@ public class MainActivity extends AppCompatActivity {
                 ajouterPoint(arrive, symStop);
             }
 
-            // On récupére à nouveau le nombre de stops
+            // On récupère à nouveau le nombre de stops
             tStop = mStops.getFeatures().size();
 
             Log.d("nStop","" + tStop );
