@@ -15,8 +15,7 @@ import java.util.Vector;
 
 public class Listetype extends Activity {
 
-    ListView mListView;
-
+    private ListView mListView;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -39,12 +38,7 @@ public class Listetype extends Activity {
             }
         }
 
-        //for (int p=0; p<lst_type1.size(); p++) {
-        //    Object l = lst_type1.get(p);
-        //    if (!lst_types.contains(l)) {
-        //        lst_types.add(l);
-        //    }
-        //}
+
         for (int o=0; o<lst_type2.size(); o++) {
             Object q = lst_type2.get(o);
             if (!lst_types.contains(q)) {

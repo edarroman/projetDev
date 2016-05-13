@@ -15,9 +15,7 @@ import java.util.Vector;
 
 public class Listemagasin extends Activity {
 
-    ListView maliste;
-
-
+    private ListView maliste;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -57,23 +55,23 @@ public class Listemagasin extends Activity {
         final List liste_magasin = lst_magasin;
 
 
-    maliste = (ListView) findViewById(R.id.listmag);
-    ArrayAdapter<String> adapter = new ArrayAdapter<String>(Listemagasin.this,
-            android.R.layout.simple_list_item_1, liste_magasin);
-    maliste.setAdapter(adapter);
+        maliste = (ListView) findViewById(R.id.listmag);
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(Listemagasin.this,
+                android.R.layout.simple_list_item_1, liste_magasin);
+        maliste.setAdapter(adapter);
 
 
-    maliste.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-            Object magasin = liste_magasin.get(position);
-            Object niveau = lst_niveau.get(position);
-            Intent intent = new Intent(Listemagasin.this, Listetype.class);
-            intent.putExtra("mag", magasin.toString());
-            intent.putExtra("niveau", niveau.toString());
-            setResult(RESULT_OK, intent);
-            finish();
-        }
-    });
+        maliste.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Object magasin = liste_magasin.get(position);
+                Object niveau = lst_niveau.get(position);
+                Intent intent = new Intent(Listemagasin.this, Listetype.class);
+                intent.putExtra("mag", magasin.toString());
+                intent.putExtra("niveau", niveau.toString());
+                setResult(RESULT_OK, intent);
+                finish();
+            }
+        });
     }
 
 
