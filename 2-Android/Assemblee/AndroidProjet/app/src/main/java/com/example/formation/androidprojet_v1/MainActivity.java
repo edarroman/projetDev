@@ -99,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
     private RouteTask mRouteTask = null;
     private NAFeaturesAsFeature mStops = new NAFeaturesAsFeature();
 
-    //////////////////////////////////// Symbole départ/arrivé : ///////////////////////////////////
+    //////////////////////////////////// Symbole départ/arrivée : ///////////////////////////////////
     Drawable marqueur;
     Symbol symStop;
 
@@ -186,7 +186,7 @@ public class MainActivity extends AppCompatActivity {
     private int niveau_dep = 0;
     private int niveau_arr = 0;
 
-    //////////////////////////////////// Points de départ et d'arrivé :  ///////////////////////////
+    //////////////////////////////////// Points de départ et d'arrivée :  ///////////////////////////
     private Geometry depart;
     private Geometry arrive;
 
@@ -270,7 +270,7 @@ public class MainActivity extends AppCompatActivity {
         mMapView.addLayer(mGraphicsLayer);
 
         //////////////////////////////////// Symbole :  ////////////////////////////////////////////
-        // Création symbole point départ/arrivé :
+        // Création symbole point départ/arrivée :
         marqueur = getResources().getDrawable(R.drawable.ic_action_marqueur);
         symStop = new PictureMarkerSymbol(marqueur);
 
@@ -347,7 +347,7 @@ public class MainActivity extends AppCompatActivity {
                         clearAffich();
                     }
 
-                    // On retrouve les points de départ et d'arrivé à l'aide de leurs noms dans la liste de magasin
+                    // On retrouve les points de départ et d'arrivée à l'aide de leurs noms dans la liste de magasin
                     Geometry ptDep = trouverPtSel(mag_dep, true);
                     depart = geomen.project(ptDep, WKID_RGF93, mapRef);
                     ajouterPoint(depart, symStop);
@@ -496,7 +496,7 @@ public class MainActivity extends AppCompatActivity {
             // Référence spatiale :
             SpatialReference mapRef = mMapView.getSpatialReference();
 
-            // Bolléen (vrai si un point est selectionné, faux sinon) :
+            // Booléen (vrai si un point est selectionné, faux sinon) :
             boolean trouve = false;
 
             // Définition de la géométrie :
@@ -509,8 +509,8 @@ public class MainActivity extends AppCompatActivity {
 
             // Remise à zero des stops :
             // Si il y a plus de deus stops au départ
-            // On supprime réinistiallise la vue et on remet en fonction du bouton sélectionné le départ
-            // ou l'arrivé (on remet le départ si on modifie l'arrivé et inversement)
+            // On réinistialise la vue et on remet en fonction du bouton sélectionné le départ
+            // ou l'arrivée (on remet le départ si on modifie l'arrivée et inversement)
             if( tStop >=2 ) {
                 mStops.clearFeatures();
                 clearAffich();
@@ -527,8 +527,8 @@ public class MainActivity extends AppCompatActivity {
             }
 
             // Lorsque qu'on a trouvé un point
-            // On gère le fait que ce soit le départ ou l'arrivé
-            // Dans tout les cas on l'ajoute au stop et on l'affiche
+            // On gère le fait que ce soit le départ ou l'arrivée
+            // Dans tous les cas on l'ajoute au stop et on l'affiche
             if(trouve){
                 depart = geomen.project(ptTest, WKID_RGF93, mapRef);
                 ajouterPoint(depart, symStop);
@@ -556,7 +556,7 @@ public class MainActivity extends AppCompatActivity {
             // Référence spatiale :
             SpatialReference mapRef = mMapView.getSpatialReference();
 
-            // Bolléen (vrai si un point est selectionné, faux sinon) :
+            // Booléen (vrai si un point est selectionné, faux sinon) :
             boolean trouve = false;
 
             // Définition de la géométrie :
@@ -568,9 +568,9 @@ public class MainActivity extends AppCompatActivity {
             //////////////////////////////////// Initinéraire :  ///////////////////////////////////
 
             // Remise à zero des stops :
-            // Si il y a plus de deus stops au départ
-            // On supprime réinistiallise la vue et on remet en fonction du bouton sélectionné le départ
-            // ou l'arrivé (on remet le départ si on modifie l'arrivé et inversement)
+            // Si il y a plus de deux stops au départ
+            // On réinistialise la vue et on remet en fonction du bouton sélectionné le départ
+            // ou l'arrivée (on remet le départ si on modifie l'arrivée et inversement)
             if( tStop >=2 ) {
                 mStops.clearFeatures();
                 clearAffich();
@@ -587,8 +587,8 @@ public class MainActivity extends AppCompatActivity {
             }
 
             // Lorsque qu'on a trouvé un point
-            // On gère le fait que ce soit le départ ou l'arrivé
-            // Dans tout les cas on l'ajoute au stop et on l'affiche
+            // On gére le fait que ce soit le départ ou l'arrivée
+            // Dans touts les cas on l'ajoute au stop et on l'affiche
             if(trouve){
                 Log.d("if_arr", "OK");
                 arrive = geomen.project(ptTest, WKID_RGF93, mapRef);
@@ -616,11 +616,8 @@ public class MainActivity extends AppCompatActivity {
      * Fonction qui récupère les données dans la base de données
      */
     public void accesBdd(){
-        // TODO : Modification automatique en fonction du type d'appareil (SD ou non)
-
         // Get the external directory
 
-        // SdCard
         String locatorPath = chTpk + "/Geocoding/MGRS.loc";
         String networkPath = chTpk + "/Routing/base_de_donnees.geodatabase";
 
@@ -816,11 +813,6 @@ public class MainActivity extends AppCompatActivity {
             mag_niveau1 = geomen.union(mag_niv1_geom, WKID_RGF93);
             mag_niveau2 = geomen.union(mag_niv2_geom, WKID_RGF93);
 
-            //////////////////////////////////// Test : ////////////////////////////////////////////
-
-            depart = gdb.getGeodatabaseTables().get(1).getFeature(35).getGeometry();
-            depart = geomen.project(depart, WKID_RGF93, mapRef);
-
         } catch (Exception e) {
             popToast("Error while initializing :" + e.getMessage(), true);
             e.printStackTrace();
@@ -837,7 +829,7 @@ public class MainActivity extends AppCompatActivity {
      */
     public Geometry trouverPtSel(String item, boolean estDepart){
 
-        // Bolléen (vrai si un point est selectionné, faux sinon) :
+        // Booléen (vrai si un point est selectionné, faux sinon) :
         boolean trouve = false;
 
         // Définition de la géométrie :
@@ -890,7 +882,7 @@ public class MainActivity extends AppCompatActivity {
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * Fonction qui ajoute une géométrie point au stops et sur le graphe avec le symbole symbol
+     * Fonction qui ajoute une géométrie point aux stops et sur le graphe avec le symbole symbol
      * @param point
      * @param symbol
      */
@@ -903,7 +895,7 @@ public class MainActivity extends AppCompatActivity {
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * Fonction qui réinisitallise l'affichage :
+     * Fonction qui réinitialise l'affichage :
      */
     public void clearAffich(){
         mGraphicsLayer.removeAll();
