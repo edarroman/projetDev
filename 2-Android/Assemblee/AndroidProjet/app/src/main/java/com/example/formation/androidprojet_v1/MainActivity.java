@@ -909,7 +909,6 @@ public class MainActivity extends AppCompatActivity {
      * Fonction qui calcule l'tinéraire
      */
     public void calculerIti(SpatialReference mapRef){
-
         // Return default behavior if we did not initialize properly.
         if (mRouteTask == null) {
             popToast("RouteTask uninitialized.", true);
@@ -922,6 +921,7 @@ public class MainActivity extends AppCompatActivity {
             params.setOutSpatialReference(mapRef);
             mStops.setSpatialReference(mapRef);
 
+            // Si l'utilisateur est à mobilité réduite, on ajoute la restriction au paramètre
             if(estRestreint){
                 String[] restrictions = {"Restriction"};
                 params.setRestrictionAttributeNames(restrictions);
@@ -961,8 +961,9 @@ public class MainActivity extends AppCompatActivity {
 
             //////////////////////////////////// Gestion : /////////////////////////////////////////
 
-            //Gestion affichage au moment du calcul d'itinéraire :
+            // Affichage de l’étage du point de départ :
             spinnerEtgSel.setSelection(niveau_dep);
+            //Gestion affichage au moment du calcul d'itinéraire :
             afficherIti();
 
             ////////////////////////////////////////////////////////////////////////////////////////
@@ -980,11 +981,11 @@ public class MainActivity extends AppCompatActivity {
      * Fonction pour afficher l'itinéraire en fonction de l'étage sélectionné
      */
     public void afficherIti(){
-        // Défintion symbole pour l'itinéraire :
-        SimpleLineSymbol ligSym = new SimpleLineSymbol(0x99990055, 5, SimpleLineSymbol.STYLE.fromString("DASH"));
-
         // Remove any previous route Graphics
         mGraphicsLayer.removeGraphic(routeHandle);
+
+        // Défintion symbole pour l'itinéraire :
+        SimpleLineSymbol ligSym = new SimpleLineSymbol(0x99990055, 5, SimpleLineSymbol.STYLE.fromString("DASH"));
 
         // On ne visualise que l'itinéraire au niveau selectionné :
         if(geom_intersect_niv0 != null && etg0Selected) {
@@ -1022,7 +1023,6 @@ public class MainActivity extends AppCompatActivity {
      * @param mapRef
      */
     public void afficherPpv(SpatialReference mapRef){
-
         //////////////////////////////////// Projection  : /////////////////////////////////////////
 
         // On projete les magasins en mapRef :
@@ -1037,14 +1037,13 @@ public class MainActivity extends AppCompatActivity {
         Geometry diff_niv1 = geomen.difference(projection_mag_niv1, depart, mapRef);
         Geometry diff_niv2 = geomen.difference(projection_mag_niv2, depart, mapRef);
 
-        Log.d("Diff", "0 : " + diff_niv0 + " 1 : " + diff_niv1 + " 2 : " + diff_niv2);
 
         //////////////////////////////////// Distance géométrique : ////////////////////////////////
+
         double distance_niv0 = geomen.distance(depart, diff_niv0, mapRef);
         double distance_niv1 = geomen.distance(depart, diff_niv1, mapRef);
         double distance_niv2 = geomen.distance(depart, diff_niv2, mapRef);
 
-        Log.d("Dist", "0 : " + distance_niv0 + " 1 : " + distance_niv1 + " 2 : " + distance_niv2);
 
         //////////////////////////////////// Initialisation : //////////////////////////////////////
 
@@ -1056,11 +1055,9 @@ public class MainActivity extends AppCompatActivity {
         Geometry mag = null;
         int taille = 14;
         double dist_ref = 1000;
-        int color = Color.rgb(255, 1, 1);
+        int color = Color.rgb(255, 1, 1); // Couleur texte d'affichage du nom du magasin
 
         if (niveau_dep == 0){
-            Log.d("niv0","Dedans");
-
             Polygon buff_niv0 = geomen.buffer(depart, mapRef, distance_niv0, meter);
             Geometry magasin = geomen.intersect(buff_niv0, projection_mag_niv0, mapRef);
 
@@ -1070,39 +1067,24 @@ public class MainActivity extends AppCompatActivity {
                 Geometry mag_niv0_r = geomen.project(mag_niv0_geom[r], WKID_RGF93, mapRef);
                 double dist_mag0 = geomen.distance(mag_niv0_r,magasin, mapRef);
 
-                Log.d("magasin",""+magasin);
-                Log.d("mag_niv0_r",""+mag_niv0_r);
-                Log.d("dist_mag0",""+dist_mag0);
-
-
                 if (dist_mag0 < dist_ref && dist_mag0!=0){
                     texte = lst_mag_niveau0.get(r).toString();
                     mag = geomen.project(mag_niv0_geom[r], WKID_RGF93, mapRef);
                     dist_ref = dist_mag0;
                 }
             }
-            Log.d("mag",""+ mag);
             // Affichage du ppv :
             if (mag != null) {
                 mGraphicsLayer.addGraphic(new Graphic(mag, new TextSymbol(taille, texte, color)));
-
-                Log.d("niv0_mag!null", "Dedans");
             }
 
         } else if (niveau_dep == 1){
-            Log.d("niv1","Dedans");
-
             Polygon buff_niv1 = geomen.buffer(depart, mapRef, distance_niv1, meter);
             Geometry magasin = geomen.intersect(buff_niv1, projection_mag_niv1, mapRef);
 
             for (int r=0; r<lst_mag_niveau1.size(); r++){
                 Geometry mag_niv1_r = geomen.project(mag_niv1_geom[r], WKID_RGF93, mapRef);
                 double dist_mag1 = geomen.distance(mag_niv1_r, magasin, mapRef);
-
-                Log.d("magasin",""+magasin);
-                Log.d("mag_niv1_r",""+mag_niv1_r);
-                Log.d("dist_mag1",""+dist_mag1);
-
 
                 // On cherhce le magasin le plus proche
                 // c'est-à-dire à la distance minimale du point de départ
@@ -1112,17 +1094,12 @@ public class MainActivity extends AppCompatActivity {
                     dist_ref = dist_mag1;
                 }
             }
-            Log.d("mag",""+ mag);
             // Affichage du ppv :
             if (mag != null) {
                 mGraphicsLayer.addGraphic(new Graphic(mag, new TextSymbol(taille, texte, color)));
-
-                Log.d("niv1_mag!null", "Dedans");
             }
 
         } else if (niveau_dep == 2){
-            Log.d("niv2","Dedans");
-
             Polygon buff_niv2 = geomen.buffer(depart, mapRef, distance_niv2, meter);
             Geometry magasin = geomen.intersect(buff_niv2, projection_mag_niv2, mapRef);
 
@@ -1132,22 +1109,15 @@ public class MainActivity extends AppCompatActivity {
                 Geometry mag_niv2_r = geomen.project(mag_niv2_geom[r], WKID_RGF93, mapRef);
                 double dist_mag2 = geomen.distance(mag_niv2_r, magasin, mapRef);
 
-                Log.d("magasin",""+magasin);
-                Log.d("mag_niv1_r",""+mag_niv2_r);
-                Log.d("dist_mag1",""+dist_mag2);
-
                 if (dist_mag2 < dist_ref && dist_mag2!=0){
                     texte = lst_mag_niveau2.get(r).toString();
                     mag = geomen.project(mag_niv2_geom[r], WKID_RGF93, mapRef);
                     dist_ref = dist_mag2;
                 }
             }
-            Log.d("mag",""+ mag);
             // Affichage du ppv :
             if (mag != null) {
                 mGraphicsLayer.addGraphic(new Graphic(mag, new TextSymbol(taille, texte, color)));
-
-                Log.d("niv2_mag!null", "Dedans");
             }
         }
     }
@@ -1160,36 +1130,36 @@ public class MainActivity extends AppCompatActivity {
      @Override
      public boolean onCreateOptionsMenu(Menu menu) {
          // Inflate the menu; this adds items to the action bar if it is present.
-             getMenuInflater().inflate(R.menu.menu_main, menu);
+         getMenuInflater().inflate(R.menu.menu_main, menu);
+         return true;
+     }
+
+     private void choix(){
+         Intent intent_choix = new Intent(MainActivity.this, Choix.class);
+         intent_choix.putExtra("Liste_mag0", lst_mag_niveau0);
+         intent_choix.putExtra("Liste_mag1", lst_mag_niveau1);
+         intent_choix.putExtra("Liste_mag2", lst_mag_niveau2);
+         intent_choix.putExtra("Liste_type0", lst_types_niveau0);
+         intent_choix.putExtra("Liste_type1", lst_types_niveau1);
+         intent_choix.putExtra("Liste_type2", lst_types_niveau2);
+
+         startActivityForResult(intent_choix, 0);
+     }
+
+     @Override
+     public boolean onOptionsItemSelected(MenuItem item) {
+         // Handle action bar item clicks here. The action bar will
+         // automatically handle clicks on the Home/Up button, so long
+         // as you specify a parent activity in AndroidManifest.xml.
+         int id = item.getItemId();
+
+         //noinspection SimplifiableIfStatement
+         if (id == R.id.action_choix) {
+             choix();
              return true;
          }
 
-         private void choix(){
-             Intent intent_choix = new Intent(MainActivity.this, Choix.class);
-             intent_choix.putExtra("Liste_mag0", lst_mag_niveau0);
-             intent_choix.putExtra("Liste_mag1", lst_mag_niveau1);
-             intent_choix.putExtra("Liste_mag2", lst_mag_niveau2);
-             intent_choix.putExtra("Liste_type0", lst_types_niveau0);
-             intent_choix.putExtra("Liste_type1", lst_types_niveau1);
-             intent_choix.putExtra("Liste_type2", lst_types_niveau2);
-
-             startActivityForResult(intent_choix, 0);
-         }
-
-         @Override
-         public boolean onOptionsItemSelected(MenuItem item) {
-             // Handle action bar item clicks here. The action bar will
-             // automatically handle clicks on the Home/Up button, so long
-             // as you specify a parent activity in AndroidManifest.xml.
-             int id = item.getItemId();
-
-             //noinspection SimplifiableIfStatement
-             if (id == R.id.action_choix) {
-                 choix();
-                 return true;
-             }
-
-         return super.onOptionsItemSelected(item);
+     return super.onOptionsItemSelected(item);
      }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
