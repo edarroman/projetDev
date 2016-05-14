@@ -2,17 +2,12 @@ package com.example.formation.androidprojet_v1;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.esri.core.geometry.Geometry;
-import com.esri.core.geometry.SpatialReference;
-import com.esri.core.map.Graphic;
-import com.esri.core.symbol.SimpleMarkerSymbol;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
@@ -62,7 +57,6 @@ public class Choix extends Activity {
         type_arr = (Button) findViewById(R.id.arrivee);
         type_arr.setText("Par type");
         ok = (Button) findViewById(R.id.ok);
-        ok.setText("OK");
 
 
         // Fonctions des boutons

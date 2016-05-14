@@ -16,7 +16,6 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
-import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.Spinner;
@@ -76,24 +75,26 @@ public class MainActivity extends AppCompatActivity {
     private final String extern = Environment.getExternalStorageDirectory().getPath();
 
     // TODO : chemin qui change en fonction SD card ou non : trouver automatiquement
-
+    /*
     // Sd card :
     private final String chTpk = "/ProjArcades/ArcGIS/";
-     /*
+    */
     // Sans sd card :
     private final String chTpk = "/Android/data/com.example.formation.androidprojet_v1/ArcGIS/";
-    */
+
 
     //////////////////////////////////// Image de fond  : //////////////////////////////////////////
     private String tpkPath  = chTpk +"arcades.tpk";
     private String tpkPath0 = chTpk +"niveau_0.tpk";
     private String tpkPath1 = chTpk +"niveau_1.tpk";
     private String tpkPath2 = chTpk +"niveau_2.tpk";
+    private String tpkPath3 = chTpk +"logo.tpk";
 
     private TiledLayer mTileLayer = new ArcGISLocalTiledLayer(extern + tpkPath);
     private TiledLayer mTileLayer0 = new ArcGISLocalTiledLayer(extern + tpkPath0);
     private TiledLayer mTileLayer1 = new ArcGISLocalTiledLayer(extern + tpkPath1);
     private TiledLayer mTileLayer2 = new ArcGISLocalTiledLayer(extern + tpkPath2);
+    private TiledLayer mTileLayer3 = new ArcGISLocalTiledLayer(extern + tpkPath3);
 
     private GraphicsLayer mGraphicsLayer = new GraphicsLayer(RenderingMode.DYNAMIC);
 
@@ -110,6 +111,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean etg0Selected = false;
     private boolean etg1Selected = false;
     private boolean etg2Selected = false;
+    private boolean logo = false;
 
     //////////////////////////////////// Gestion du QR code : //////////////////////////////////////
     private Geometry geom_QR_code = null;
@@ -178,9 +180,6 @@ public class MainActivity extends AppCompatActivity {
     private CheckBox checkBoxRes = null;
     private boolean estRestreint = false;
 
-    //////////////////////////////////// Variable de Qr Code : ////////////////////////////////
-    private ImageView qrButton;
-
     //////////////////////////////////// Saisie automatique  :  ////////////////////////////////////
     private List lst_nom_mag = new ArrayList();
     private AutoCompleteTextView textViewArr;
@@ -193,6 +192,9 @@ public class MainActivity extends AppCompatActivity {
     //////////////////////////////////// Points de départ et d'arrivé :  ///////////////////////////
     private Geometry depart;
     private Geometry arrive;
+
+    //////////////////////////////////// Variable de Qr Code : ////////////////////////////////
+    private ImageView qrButton;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //////////////////////////////////// METHODES : ////////////////////////////////////////////////
@@ -228,8 +230,7 @@ public class MainActivity extends AppCompatActivity {
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_dropdown_item_1line, lst_nom_mag);
         // Bouton :
-        textViewDep = (AutoCompleteTextView)
-                findViewById(R.id.dep_magasin);
+        textViewDep = (AutoCompleteTextView) findViewById(R.id.dep_magasin);
         String depTxt = getResources().getString(R.string.dep);
         textViewDep .setHint(depTxt);
         textViewDep .setAdapter(adapter);
@@ -265,6 +266,9 @@ public class MainActivity extends AppCompatActivity {
 
         mMapView.addLayer(mTileLayer);
         mTileLayer.setVisible(false);
+
+        mMapView.addLayer(mTileLayer3);
+        mTileLayer3.setVisible(false);
 
         // Ajout couche graphique :
         mMapView.addLayer(mGraphicsLayer);
@@ -348,16 +352,16 @@ public class MainActivity extends AppCompatActivity {
                         clearAffich();
                     }
 
-                    // On retrouve lles points de départ et d'arrivé à l'aide de leurs noms dans la liste de magasin
-                    Geometry ptDep = trouverPtSel(mag_dep, true);
+                    // On retrouve les points de départ et d'arrivée à l'aide de leurs noms dans la liste de magasin
+                    Geometry ptDep = trouverPtSel(mag_dep, true, mapRef);
                     depart = geomen.project(ptDep, WKID_RGF93, mapRef);
                     ajouterPoint(depart, symStop);
 
-                    Geometry ptArr =trouverPtSel(mag_arr, false);
+                    Geometry ptArr = trouverPtSel(mag_arr, false, mapRef);
                     arrive = geomen.project(ptArr, WKID_RGF93, mapRef);
                     ajouterPoint(arrive, symStop);
 
-                    // On récupéère à nouveua le noombre de stop :
+                    // On récupère à nouveau le nombre de stop :
                     tStop = mStops.getFeatures().size();
 
                     // Si on a 2 stops on calcule et on affiche l'itinéraire
@@ -381,21 +385,24 @@ public class MainActivity extends AppCompatActivity {
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //////////////////////////////////// LISTENERS : ///////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////
-
     /**
      * Listener du bouton de la restriction.
      * */
     private View.OnClickListener checkedListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
+            // On récupère la référence sptaiale :
+            SpatialReference mapRef = mMapView.getSpatialReference();
             if(((CheckBox)v).isChecked()) {
                 estRestreint = true;
             }else{
                 estRestreint = false;
             }
+            // On cllear ce qui est affiché et on recalcule l'itinéraire avec la restriction
+            clearAffich();
+            calculerIti(mapRef);
         }
     };
-
 
     /**
      * Listener du bouton de choix d'étage :
@@ -413,33 +420,44 @@ public class MainActivity extends AppCompatActivity {
             // Showing selected spinner item
             Toast.makeText(parent.getContext(), etageSelec + " sélectionné", Toast.LENGTH_LONG).show();
 
-            // On recupere les noms des etages qui sont stockés dans ressources.strings.values
+            // On recupère les noms des étages qui sont stockés dans ressources.strings.values
             String[] nom_etage = getResources().getStringArray(R.array.etage_array);
 
             // Test suivant la selection de l'utilisateur:
             if (etageSelec.equals(nom_etage[0])) {
                 etgsSelected = false;
-                etg0Selected = true;
+                etg0Selected = false;
                 etg1Selected = false;
                 etg2Selected = false;
+                logo = true;
             }
             if (etageSelec.equals(nom_etage[1])) {
                 etgsSelected = false;
-                etg0Selected = false;
-                etg1Selected = true;
+                etg0Selected = true;
+                etg1Selected = false;
                 etg2Selected = false;
+                logo = false;
             }
             if (etageSelec.equals(nom_etage[2])) {
                 etgsSelected = false;
                 etg0Selected = false;
-                etg1Selected = false;
-                etg2Selected = true;
+                etg1Selected = true;
+                etg2Selected = false;
+                logo = false;
             }
             if (etageSelec.equals(nom_etage[3])) {
+                etgsSelected = false;
+                etg0Selected = false;
+                etg1Selected = false;
+                etg2Selected = true;
+                logo = false;
+            }
+            if (etageSelec.equals(nom_etage[4])) {
                 etgsSelected = true;
                 etg0Selected = false;
                 etg1Selected = false;
                 etg2Selected = false;
+                logo = false;
             }
 
             // On affiche l'étage sélectionné :
@@ -447,6 +465,7 @@ public class MainActivity extends AppCompatActivity {
             mTileLayer0.setVisible(etg0Selected);
             mTileLayer1.setVisible(etg1Selected);
             mTileLayer2.setVisible(etg2Selected);
+            mTileLayer3.setVisible(logo);
 
             ////////////////////////////////////////////////////////////////////////////////////////
 
@@ -474,8 +493,8 @@ public class MainActivity extends AppCompatActivity {
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * Listener bouton saise auto
-     * Il y en a deux car aucun moyen de récupérere facilement l'id de l(AutoCompleteTextView sur laquelle on clique
+     * Listener bouton saisie auto
+     * Il y en a deux car aucun moyen de récupérer facilement l'id de l'AutoCompleteTextView sur laquelle on clique
      */
 
     //////////////////////////////////// Départ :  /////////////////////////////////////////////////
@@ -501,33 +520,33 @@ public class MainActivity extends AppCompatActivity {
             //////////////////////////////////// Initinéraire :  ///////////////////////////////////
 
             // Remise à zero des stops :
-            // Si il y a plus de deus stops au départ
-            // On supprime réinistiallise la vue et on remet en fonction du bouton sélectionné le départ
-            // ou l'arrivé (on remet le départ si on modifie l'arrivé et inversement)
+            // Si il y a plus de deux stops au départ
+            // On supprime réinitialise la vue et on remet en fonction du bouton sélectionné le départ
+            // ou l'arrivée (on remet le départ si on modifie l'arrivée et inversement)
             if( tStop >=2 ) {
                 mStops.clearFeatures();
                 clearAffich();
-                ajouterPoint(depart, symStop);
+                ajouterPoint(arrive, symStop);
             }
 
             // On selectionne le magasin dans la liste de saisie automatique
             String item = parent.getItemAtPosition(position).toString();
             Log.v("mag_selectionne",item);
 
-            ptTest = trouverPtSel(item, true);
+            ptTest = trouverPtSel(item, true, mapRef);
             if (ptTest !=null){
                 trouve = true;
             }
 
             // Lorsque qu'on a trouvé un point
-            // On gère le fait que ce soit le départ ou l'arrivé
+            // On gère le fait que ce soit le départ ou l'arrivée
             // Dans tout les cas on l'ajoute au stop et on l'affiche
             if(trouve){
                 depart = geomen.project(ptTest, WKID_RGF93, mapRef);
                 ajouterPoint(depart, symStop);
             }
 
-            // On récupére à nouveau le nombre de stops
+            // On récupère à nouveau le nombre de stops
             tStop = mStops.getFeatures().size();
 
             // Si on a 2 stops on calcule et on affiche l'itinéraire
@@ -549,7 +568,7 @@ public class MainActivity extends AppCompatActivity {
             // Référence spatiale :
             SpatialReference mapRef = mMapView.getSpatialReference();
 
-            // Bolléen (vrai si un point est selectionné, faux sinon) :
+            // Boolléen (vrai si un point est selectionné, faux sinon) :
             boolean trouve = false;
 
             // Définition de la géométrie :
@@ -561,9 +580,9 @@ public class MainActivity extends AppCompatActivity {
             //////////////////////////////////// Initinéraire :  ///////////////////////////////////
 
             // Remise à zero des stops :
-            // Si il y a plus de deus stops au départ
-            // On supprime réinistiallise la vue et on remet en fonction du bouton sélectionné le départ
-            // ou l'arrivé (on remet le départ si on modifie l'arrivé et inversement)
+            // Si il y a plus de deux stops au départ
+            // On supprime réinitialise la vue et on remet en fonction du bouton sélectionné le départ
+            // ou l'arrivée (on remet le départ si on modifie l'arrivée et inversement)
             if( tStop >=2 ) {
                 mStops.clearFeatures();
                 clearAffich();
@@ -574,13 +593,13 @@ public class MainActivity extends AppCompatActivity {
             String item = parent.getItemAtPosition(position).toString();
             Log.v("mag_selectionne",item);
 
-            ptTest = trouverPtSel(item, false);
+            ptTest = trouverPtSel(item, false, mapRef);
             if (ptTest !=null){
                 trouve = true;
             }
 
             // Lorsque qu'on a trouvé un point
-            // On gère le fait que ce soit le départ ou l'arrivé
+            // On gère le fait que ce soit le départ ou l'arrivée
             // Dans tout les cas on l'ajoute au stop et on l'affiche
             if(trouve){
                 Log.d("if_arr", "OK");
@@ -588,7 +607,7 @@ public class MainActivity extends AppCompatActivity {
                 ajouterPoint(arrive, symStop);
             }
 
-            // On récupére à nouveau le nombre de stops
+            // On récupère à nouveau le nombre de stops
             tStop = mStops.getFeatures().size();
 
             Log.d("nStop","" + tStop );
@@ -828,7 +847,7 @@ public class MainActivity extends AppCompatActivity {
      * @param estDepart
      * @return
      */
-    public Geometry trouverPtSel(String item, boolean estDepart){
+    public Geometry trouverPtSel(String item, boolean estDepart, SpatialReference mapRef){
 
         // Bolléen (vrai si un point est selectionné, faux sinon) :
         boolean trouve = false;
@@ -848,6 +867,7 @@ public class MainActivity extends AppCompatActivity {
                 trouve = true;
                 if(estDepart) {niveau_dep = 0;}
                 else{niveau_arr = 0;}
+                afficherNom(nom_mag, ptTest, mapRef);
             }
         }
         if(!trouve){
@@ -861,6 +881,7 @@ public class MainActivity extends AppCompatActivity {
                     trouve = true;
                     if(estDepart) {niveau_dep = 1;}
                     else{niveau_arr = 1;}
+                    afficherNom(nom_mag, ptTest, mapRef);
                 }
             }
         }
@@ -874,9 +895,11 @@ public class MainActivity extends AppCompatActivity {
                     ptTest = mag_niv2[k].getGeometry();
                     if(estDepart) {niveau_dep = 2;}
                     else{niveau_arr = 2;}
+                    afficherNom(nom_mag, ptTest, mapRef);
                 }
             }
         }
+
         return ptTest;
     }
 
@@ -963,7 +986,7 @@ public class MainActivity extends AppCompatActivity {
             //////////////////////////////////// Gestion : /////////////////////////////////////////
 
             //Gestion affichage au moment du calcul d'itinéraire :
-            spinnerEtgSel.setSelection(niveau_dep);
+            spinnerEtgSel.setSelection(niveau_dep+1);
             afficherIti();
 
             ////////////////////////////////////////////////////////////////////////////////////////
@@ -1055,9 +1078,9 @@ public class MainActivity extends AppCompatActivity {
         // Initialisation des variables utile au calcul du ppv :
         String texte = null;
         Geometry mag = null;
-        int taille = 14;
+        int taille = 16;
         double dist_ref = 1000;
-        int color = Color.rgb(255, 1, 1);
+        int color = Color.rgb(72,118,255);
 
         if (niveau_dep == 0){
             Log.d("niv0","Dedans");
@@ -1146,11 +1169,27 @@ public class MainActivity extends AppCompatActivity {
             Log.d("mag",""+ mag);
             // Affichage du ppv :
             if (mag != null) {
-                mGraphicsLayer.addGraphic(new Graphic(mag, new TextSymbol(taille, texte, color)));
+                mGraphicsLayer.addGraphic(new Graphic(mag, new TextSymbol(taille, texte, color,
+                        TextSymbol.HorizontalAlignment.LEFT, TextSymbol.VerticalAlignment.BOTTOM)));
 
                 Log.d("niv2_mag!null", "Dedans");
             }
         }
+    }
+
+    /**
+     * Fonction qui affiche le nom des points selectionnés:
+     * @param nom_mag
+     * @param PtTest
+     * @param mapRef
+     */
+    public void afficherNom(Object nom_mag, Geometry PtTest, SpatialReference mapRef) {
+        String nom = nom_mag.toString();
+        int taille_nom = 16;
+        int color_nom = Color.rgb(255, 1, 1);
+        Geometry point = geomen.project(PtTest, WKID_RGF93, mapRef);
+        mGraphicsLayer.addGraphic(new Graphic(point, new TextSymbol(taille_nom, nom, color_nom,
+                TextSymbol.HorizontalAlignment.CENTER, TextSymbol.VerticalAlignment.MIDDLE)));
     }
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
