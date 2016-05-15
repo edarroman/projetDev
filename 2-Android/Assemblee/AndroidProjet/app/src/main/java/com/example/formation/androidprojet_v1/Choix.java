@@ -120,14 +120,11 @@ public class Choix extends Activity {
                     Intent intent_req = new Intent(Choix.this, MainActivity.class);
                     intent_req.putExtra("Depart", mag_dep);
                     intent_req.putExtra("Arrivee", mag_ar);
-                    intent_req.putExtra("Niv_ar", niv_ar);
-                    intent_req.putExtra("Niv_dep", niv_dep);
                     setResult(RESULT_OK, intent_req);
                     finish();
                 }
             }
         });
-
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -170,5 +167,4 @@ public class Choix extends Activity {
         }
 
     }
-
 }

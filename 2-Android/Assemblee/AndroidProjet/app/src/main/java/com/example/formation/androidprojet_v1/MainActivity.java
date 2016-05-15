@@ -364,13 +364,6 @@ public class MainActivity extends AppCompatActivity {
                         calculerIti(mapRef);
                         afficherPpv(mapRef);
                     }
-
-                    // Todo enlever l'intent
-
-                    /*
-                    final String niv_ar = intent.getStringExtra("Niv_ar");
-                    final String niv_dep = intent.getStringExtra("Niv_dep");
-                    */
                 }
             }
         }
