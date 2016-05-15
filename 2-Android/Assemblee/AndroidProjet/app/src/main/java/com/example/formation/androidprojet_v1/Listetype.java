@@ -15,13 +15,23 @@ import java.util.Vector;
 
 public class Listetype extends Activity {
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////// VARIABLES : ///////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
     private ListView mListView;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////// METHODES : ////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.listetype);
 
+        //////////////////////////////////// Import :  /////////////////////////////////////////////
+        // Import des données transmises par l'activité choix
         List lst_types = new Vector();
         Intent intent_type = getIntent();
         final ArrayList lst_mag0 = intent_type.getStringArrayListExtra("Liste_mag0");
@@ -31,32 +41,42 @@ public class Listetype extends Activity {
         final ArrayList lst_type1 = intent_type.getStringArrayListExtra("Liste_type1");
         final ArrayList lst_type2 = intent_type.getStringArrayListExtra("Liste_type2");
 
-        for (int s=0; s<lst_type0.size(); s++) {
-            Object t = lst_type0.get(s);
-            if (!lst_types.contains(t)) {
-                lst_types.add(t);
+        // Création du liste contenant tout les types :
+        for (int l=0; l<lst_type0.size(); l++) {
+            Object obj = lst_type0.get(l);
+            if (!lst_types.contains(obj)) {
+                lst_types.add(obj);
             }
         }
 
+        for (int m=0; m<lst_type1.size(); m++) {
+            Object obj = lst_type1.get(m);
+            if (!lst_types.contains(obj)) {
+                lst_types.add(obj);
+            }
+        }
 
-        for (int o=0; o<lst_type2.size(); o++) {
-            Object q = lst_type2.get(o);
-            if (!lst_types.contains(q)) {
-                lst_types.add(q);
+        for (int k=0; k<lst_type2.size(); k++) {
+            Object obj = lst_type2.get(k);
+            if (!lst_types.contains(obj)) {
+                lst_types.add(obj);
             }
         }
 
         final List liste_type = lst_types;
 
+        //////////////////////////////////// Affichage :  //////////////////////////////////////////
+        // Affichage des types
         mListView = (ListView) findViewById(R.id.listetype);
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(Listetype.this,
                 android.R.layout.simple_list_item_1, liste_type);
         mListView.setAdapter(adapter);
 
-
+        //////////////////////////////////// Listeners :  //////////////////////////////////////////
+        // Nous envoyons au click les inforamtions suivantes à l'activité Listemagasin :
+        // le type du magasin recherché ainsi que l'ensemble des types et des noms des magasins
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
                 Object type = liste_type.get(position);
                 Intent intent = new Intent(Listetype.this, Listemagasin.class);
                 intent.putExtra("type", type.toString());
@@ -70,7 +90,12 @@ public class Listetype extends Activity {
             }
         });
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    // Retour des différentes activités et utilisation de leurs données
     protected void onActivityResult(int requestCode, int resultCode, Intent intent_req) {
+        // On renvoie le magasin choisi à l'activité choix :
         if (String.valueOf(requestCode)==String.valueOf(1)) {
             if (String.valueOf(resultCode)==String.valueOf(RESULT_OK)) {
                 Intent intent = new Intent(Listetype.this, Choix.class);

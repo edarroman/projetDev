@@ -41,7 +41,7 @@ public class Choix extends Activity {
         setContentView(R.layout.choix_magasin);
 
         //////////////////////////////////// Import :  /////////////////////////////////////////////
-        // import des données transmises par l'activité principale
+        // Import des données transmises par l'activité principale
         Intent intent_choix = getIntent();
         final ArrayList lst_mag0 = intent_choix.getStringArrayListExtra("Liste_mag0");
         final ArrayList lst_mag1 = intent_choix.getStringArrayListExtra("Liste_mag1");
@@ -65,7 +65,6 @@ public class Choix extends Activity {
         type_arr.setText("Par type");
         ok = (Button) findViewById(R.id.ok);
         ok.setText("OK");
-
 
         //////////////////////////////////// Listeners :  //////////////////////////////////////////
         type_dep.setOnClickListener(new View.OnClickListener() {
