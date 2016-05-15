@@ -75,7 +75,6 @@ public class Listetype extends Activity {
             if (String.valueOf(resultCode)==String.valueOf(RESULT_OK)) {
                 Intent intent = new Intent(Listetype.this, Choix.class);
                 intent.putExtra("mag", intent_req.getStringExtra("mag"));
-                intent.putExtra("niveau", intent_req.getStringExtra("niveau"));
                 setResult(RESULT_OK, intent);
                 finish();
             }

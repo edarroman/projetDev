@@ -30,8 +30,6 @@ public class Choix extends Activity {
     private Button ok;
     private String mag_dep;
     private String mag_ar;
-    private String niv_ar;
-    private String niv_dep;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //////////////////////////////////// METHODES : ////////////////////////////////////////////////
@@ -128,6 +126,7 @@ public class Choix extends Activity {
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
+
     // Retour des différentes activités et utilisation de leurs données
     protected void onActivityResult(int requestCode, int resultCode, Intent intent_req) {
         IntentResult scanningResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, intent_req);
@@ -153,15 +152,12 @@ public class Choix extends Activity {
                 if (String.valueOf(resultCode) == String.valueOf(RESULT_OK)) {
                     t_arr.setText(intent_req.getStringExtra("mag"));
                     mag_ar = intent_req.getStringExtra("mag");
-                    niv_ar = intent_req.getStringExtra("niveau");
                 }
             }
             if (String.valueOf(requestCode) == String.valueOf(3)) {
                 if (String.valueOf(resultCode) == String.valueOf(RESULT_OK)) {
                     t_dep.setText(intent_req.getStringExtra("mag"));
                     mag_dep = intent_req.getStringExtra("mag");
-                    niv_dep = intent_req.getStringExtra("niveau");
-
                 }
             }
         }
