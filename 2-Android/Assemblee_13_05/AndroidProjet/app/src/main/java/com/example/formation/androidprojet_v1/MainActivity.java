@@ -398,8 +398,8 @@ public class MainActivity extends AppCompatActivity {
             }else{
                 estRestreint = false;
             }
-            // On cllear ce qui est affiché et on recalcule l'itinéraire avec la restriction
-            clearAffich();
+            // On clear ce qui est affiché et on recalcule l'itinéraire avec la restriction
+            mGraphicsLayer.removeGraphic(routeHandle);
             calculerIti(mapRef);
         }
     };
