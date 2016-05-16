@@ -3,6 +3,7 @@
 
     <string name="choix_etage">Choissisez un etage</string>
     <string-array name="etage_array">
+        <item>Choix étage</item>
         <item>Etage 0</item>
         <item>Etage 1</item>
         <item>Etage 2</item>

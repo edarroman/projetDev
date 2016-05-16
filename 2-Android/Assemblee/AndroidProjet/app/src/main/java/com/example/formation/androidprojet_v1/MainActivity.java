@@ -18,6 +18,7 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -88,11 +89,13 @@ public class MainActivity extends AppCompatActivity {
     private String tpkPath0 = chTpk +"niveau_0.tpk";
     private String tpkPath1 = chTpk +"niveau_1.tpk";
     private String tpkPath2 = chTpk +"niveau_2.tpk";
+    private String tpkPath3 = chTpk +"logoSelected.tpk";
 
     private TiledLayer mTileLayer = new ArcGISLocalTiledLayer(extern + tpkPath);
     private TiledLayer mTileLayer0 = new ArcGISLocalTiledLayer(extern + tpkPath0);
     private TiledLayer mTileLayer1 = new ArcGISLocalTiledLayer(extern + tpkPath1);
     private TiledLayer mTileLayer2 = new ArcGISLocalTiledLayer(extern + tpkPath2);
+    private TiledLayer mTileLayer3 = new ArcGISLocalTiledLayer(extern + tpkPath3);
 
     private GraphicsLayer mGraphicsLayer = new GraphicsLayer(RenderingMode.DYNAMIC);
 
@@ -100,8 +103,8 @@ public class MainActivity extends AppCompatActivity {
     private NAFeaturesAsFeature mStops = new NAFeaturesAsFeature();
 
     //////////////////////////////////// Symbole départ/arrivée : ///////////////////////////////////
-    Drawable marqueur;
-    Symbol symStop;
+    private Drawable marqueur;
+    private Symbol symStop;
 
     //////////////////////////////////// Gestion du multi-étage : //////////////////////////////////
     private Spinner spinnerEtgSel;
@@ -109,6 +112,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean etg0Selected = false;
     private boolean etg1Selected = false;
     private boolean etg2Selected = false;
+    private boolean logoSelected = false;
 
     //////////////////////////////////// Gestion du QR code : //////////////////////////////////////
     private Geometry geom_QR_code = null;
@@ -212,15 +216,11 @@ public class MainActivity extends AppCompatActivity {
         spinnerEtgSel.setOnItemSelectedListener(new BoutonEtageListener());
 
         // Checkbox sur la restriction :
-        checkBoxRes = (CheckBox)findViewById(R.id.checkBoxRes);
-        String resTxt = getResources().getString(R.string.rest);
-        checkBoxRes.setText(resTxt);
+        checkBoxRes = (CheckBox)findViewById(R.id.handicap);
         checkBoxRes.setOnClickListener(new checkedListener());
 
         // QR code
-        Button qrButton = (Button) findViewById(R.id.scan_button);
-        String qrTxt = getResources().getString(R.string.qr);
-        qrButton.setText(qrTxt);
+        ImageView qrButton = (ImageView) findViewById(R.id.scan_button);
         qrButton.setOnClickListener(new BoutonQRcodeListener());
 
         // Saisie automatique
@@ -417,27 +417,38 @@ public class MainActivity extends AppCompatActivity {
             // Test suivant la selection de l'utilisateur:
             if (etageSelec.equals(nom_etage[0])) {
                 etgsSelected = false;
-                etg0Selected = true;
+                etg0Selected = false;
                 etg1Selected = false;
                 etg2Selected = false;
+                logoSelected = true;
             }
             if (etageSelec.equals(nom_etage[1])) {
                 etgsSelected = false;
-                etg0Selected = false;
-                etg1Selected = true;
+                etg0Selected = true;
+                etg1Selected = false;
                 etg2Selected = false;
+                logoSelected = false;
             }
             if (etageSelec.equals(nom_etage[2])) {
                 etgsSelected = false;
                 etg0Selected = false;
-                etg1Selected = false;
-                etg2Selected = true;
+                etg1Selected = true;
+                etg2Selected = false;
+                logoSelected = false;
             }
             if (etageSelec.equals(nom_etage[3])) {
+                etgsSelected = false;
+                etg0Selected = false;
+                etg1Selected = false;
+                etg2Selected = true;
+                logoSelected = false;
+            }
+            if (etageSelec.equals(nom_etage[4])) {
                 etgsSelected = true;
                 etg0Selected = false;
                 etg1Selected = false;
                 etg2Selected = false;
+                logoSelected = false;
             }
 
             // On affiche l'étage sélectionné :
@@ -445,6 +456,7 @@ public class MainActivity extends AppCompatActivity {
             mTileLayer0.setVisible(etg0Selected);
             mTileLayer1.setVisible(etg1Selected);
             mTileLayer2.setVisible(etg2Selected);
+            mTileLayer3.setVisible(logoSelected);
 
             ////////////////////////////////////////////////////////////////////////////////////////
 
@@ -840,6 +852,7 @@ public class MainActivity extends AppCompatActivity {
                 trouve = true;
                 if(estDepart) {niveau_dep = 0;}
                 else{niveau_arr = 0;}
+                afficherNom(nom_mag, ptTest);
             }
         }
         if(!trouve){
@@ -853,6 +866,7 @@ public class MainActivity extends AppCompatActivity {
                     trouve = true;
                     if(estDepart) {niveau_dep = 1;}
                     else{niveau_arr = 1;}
+                    afficherNom(nom_mag, ptTest);
                 }
             }
         }
@@ -866,6 +880,7 @@ public class MainActivity extends AppCompatActivity {
                     ptTest = mag_niv2[k].getGeometry();
                     if(estDepart) {niveau_dep = 2;}
                     else{niveau_arr = 2;}
+                    afficherNom(nom_mag, ptTest);
                 }
             }
         }
@@ -955,7 +970,7 @@ public class MainActivity extends AppCompatActivity {
             //////////////////////////////////// Gestion : /////////////////////////////////////////
 
             // Affichage de l’étage du point de départ :
-            spinnerEtgSel.setSelection(niveau_dep);
+            spinnerEtgSel.setSelection(niveau_dep+1);
             //Gestion affichage au moment du calcul d'itinéraire :
             afficherIti();
 
@@ -1114,6 +1129,24 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
+    /////////////////////////////////////////////////////////////////////
+
+    /**
+     * Fonction qui affiche le nom des points selectionnés:
+     * @param nom_mag
+     * @param PtTest
+     */
+    public void afficherNom(Object nom_mag, Geometry PtTest) {
+        SpatialReference mapRef = mMapView.getSpatialReference();
+        String nom = nom_mag.toString();
+        int taille_nom = 16;
+        int color_nom = Color.rgb(255, 1, 1);
+        Geometry point = geomen.project(PtTest, WKID_RGF93, mapRef);
+        mGraphicsLayer.addGraphic(new Graphic(point, new TextSymbol(taille_nom, nom, color_nom,
+                TextSymbol.HorizontalAlignment.CENTER, TextSymbol.VerticalAlignment.MIDDLE)));
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
