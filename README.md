@@ -45,3 +45,7 @@ topologie)
 - API Google Maps
 - SDK Arcgis Android
 - SDK Graphhopper pour le calcul d’itinéraire
+
+## Visuel de l'appplication
+
+![alt tag](1-Documents\Visuel\appli_demo.png)
