@@ -104,15 +104,11 @@ public class MainActivity extends AppCompatActivity {
     private NAFeaturesAsFeature mStops = new NAFeaturesAsFeature();
 
     //////////////////////////////////// Symbole départ/arrivée : ///////////////////////////////////
-<<<<<<< HEAD
     private Drawable marqueurDep;
     private Drawable marqueurArr;
     private Symbol symDep;
     private Symbol symArr;
-=======
-    private Drawable marqueur;
-    private Symbol symStop;
->>>>>>> 2c1c607a835fc5e0ff569e1598029aed6bd5ef04
+
 
     //////////////////////////////////// Gestion du multi-étage : //////////////////////////////////
     private Spinner spinnerEtgSel;
@@ -280,7 +276,6 @@ public class MainActivity extends AppCompatActivity {
         mMapView.addLayer(mGraphicsLayer);
 
         //////////////////////////////////// Symbole :  ////////////////////////////////////////////
-<<<<<<< HEAD
         // Création symbole point départ
         marqueurDep = getResources().getDrawable(R.drawable.marqueur_depart);
         symDep = new PictureMarkerSymbol(marqueurDep);
@@ -288,11 +283,7 @@ public class MainActivity extends AppCompatActivity {
         // Création symbole point arrivée :
         marqueurArr = getResources().getDrawable(R.drawable.marqueur_arrivee);
         symArr = new PictureMarkerSymbol(marqueurArr);
-=======
-        // Création symbole point départ/arrivée :
-        marqueur = getResources().getDrawable(R.drawable.ic_action_marqueur);
-        symStop = new PictureMarkerSymbol(marqueur);
->>>>>>> 2c1c607a835fc5e0ff569e1598029aed6bd5ef04
+
 
         //////////////////////////////////// Base de données :  ////////////////////////////////////
         // Récupération des élémenst dans la bdd :
@@ -539,11 +530,7 @@ public class MainActivity extends AppCompatActivity {
             if( tStop >=2 ) {
                 mStops.clearFeatures();
                 clearAffich();
-<<<<<<< HEAD
                 ajouterPoint(arrive, symArr);
-=======
-                ajouterPoint(arrive, symStop);
->>>>>>> 2c1c607a835fc5e0ff569e1598029aed6bd5ef04
             }
 
             // On selectionne le magasin dans la liste de saisie automatique
@@ -1165,11 +1152,9 @@ public class MainActivity extends AppCompatActivity {
         SpatialReference mapRef = mMapView.getSpatialReference();
         String nom = nom_mag.toString();
         int taille_nom = 16;
-<<<<<<< HEAD
+
         int color_nom = Color.rgb(10, 10, 255);
-=======
-        int color_nom = Color.rgb(255, 1, 1);
->>>>>>> 2c1c607a835fc5e0ff569e1598029aed6bd5ef04
+
         Geometry point = geomen.project(PtTest, WKID_RGF93, mapRef);
         mGraphicsLayer.addGraphic(new Graphic(point, new TextSymbol(taille_nom, nom, color_nom,
                 TextSymbol.HorizontalAlignment.CENTER, TextSymbol.VerticalAlignment.MIDDLE)));
