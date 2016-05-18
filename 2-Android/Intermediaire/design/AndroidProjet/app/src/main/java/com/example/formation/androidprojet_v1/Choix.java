@@ -23,16 +23,16 @@ import java.util.ArrayList;
  */
 public class Choix extends Activity {
     // Initialisation des variables
-    TextView t_dep;
-    TextView t_arr;
-    Button type_arr;
-    Button type_dep;
-    Button qr;
-    Button ok;
-    String mag_dep;
-    String mag_ar;
-    String niv_ar;
-    String niv_dep;
+    private TextView t_dep;
+    private TextView t_arr;
+    private Button type_arr;
+    private Button type_dep;
+    private Button qr;
+    private Button ok;
+    private String mag_dep;
+    private String mag_ar;
+    private String niv_ar;
+    private String niv_dep;
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
     @Override

@@ -1,57 +1,143 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:weightSum="1">
 
-    <TextView
-        android:layout_width="wrap_content"
+    <RelativeLayout
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:text="Départ : "
-        android:textStyle="bold"
-        android:textColor="#FF0000"
-        android:gravity="center"
-        />
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceSmall"
-        android:id="@+id/mag_dep"
-        android:layout_below="@+id/mag_dep"
-        android:layout_centerHorizontal="true" />
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/depart"
-        android:layout_gravity="center_horizontal" />
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/qr"
-        android:layout_gravity="center_horizontal" />
+        android:layout_marginTop="10dp">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="30dp"
+            android:text="Choix de votre itinéraire"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="20dp" />
+    </RelativeLayout>
 
-    <TextView
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp">
+        <TextView
+            android:layout_width="140dp"
+            android:layout_height="105dp"
+            android:textSize="20dp"
+            android:text="Départ : "
+            android:textStyle="bold"
+            android:textColor="#FF0000"
+            android:gravity="center"
+            android:id="@+id/textView2"
+            android:layout_alignParentTop="true"
+            android:layout_toLeftOf="@+id/mag_dep"
+            android:layout_toStartOf="@+id/mag_dep"
+            android:layout_marginRight="20dp"
+            android:layout_marginEnd="20dp" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="20dp"
+            android:textColor="@color/colorPrimary"
+            android:id="@+id/mag_dep"
+            android:layout_centerVertical="true"
+            android:layout_centerHorizontal="true" />
+    </RelativeLayout>
+
+    <RelativeLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Arrivée : "
-        android:textStyle="bold"
-        android:textColor="#FF0000"
-        android:gravity="center"
-        />
-    <TextView
-        android:layout_width="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="10dp">
+        <Button
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/depart"
+            android:layout_gravity="center_horizontal"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:background="@color/colorPrimary"
+            android:textColor="#FFFFFF"/>
+        <Button
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/qr"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginLeft="49dp"
+            android:layout_marginStart="49dp"
+            android:layout_alignParentTop="true"
+            android:layout_toRightOf="@+id/depart"
+            android:layout_toEndOf="@+id/depart"
+            android:background="@color/colorPrimary"
+            android:textColor="#FFFFFF"/>
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceSmall"
-        android:id="@+id/mag_arr"
-        android:layout_below="@+id/mag_arr"
-        android:layout_centerHorizontal="true" />
-    <Button
-        android:layout_width="wrap_content"
+        android:layout_marginTop="20dp">
+
+        <TextView
+            android:layout_width="140dp"
+            android:layout_height="105dp"
+            android:text="Arrivée : "
+            android:textSize="20dp"
+            android:textStyle="bold"
+            android:textColor="#FF0000"
+            android:gravity="center"
+            android:layout_weight="0.49"
+            android:id="@+id/textView"
+            android:layout_alignParentTop="true"
+            android:layout_toLeftOf="@+id/mag_arr"
+            android:layout_toStartOf="@+id/mag_arr"
+            android:layout_marginRight="20dp"
+            android:layout_marginEnd="20dp" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="20dp"
+            android:textColor="#0000FF"
+            android:id="@+id/mag_arr"
+            android:layout_centerVertical="true"
+            android:layout_centerHorizontal="true" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/arrivee"
-        android:layout_gravity="center_horizontal" />
-    <Button
-        android:layout_width="wrap_content"
+        android:layout_marginTop="10dp">
+        <Button
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/arrivee"
+            android:layout_gravity="right"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            android:background="@color/colorPrimary"
+            android:textColor="#FFFFFF"/>
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/ok"
-        android:layout_gravity="center_horizontal" />
+        android:layout_marginTop="30dp">
+        <Button
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/ok"
+            android:textSize="70dp"
+            android:textStyle="bold"
+            android:textColor="#FF6347"
+            android:layout_gravity="center_horizontal"
+            android:layout_centerVertical="true"
+            android:layout_centerHorizontal="true"
+            android:background="@color/colorPrimaryDark"/>
+    </RelativeLayout>
+
+
 </LinearLayout>

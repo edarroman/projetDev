@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:weightSum="1"
+    android:background="#F08080">
+
+    <TextView
+        android:layout_width="318dp"
+        android:layout_height="wrap_content"
+        android:text="Départ : "
+        android:textStyle="bold"
+        android:textColor="#FF0000"
+        android:textSize="50dp"
+        android:gravity="center"
+        android:layout_weight="0.16"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="40dp"/>
+
+    <TextView
+        android:layout_width="148dp"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:id="@+id/mag_dep"
+        android:layout_below="@+id/mag_dep"
+        android:layout_centerHorizontal="true"
+        android:layout_gravity="center_horizontal"
+        android:layout_weight="0.07" />
+
+    <Button
+        android:layout_width="160dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/depart"
+        android:background="#CD5555"
+        android:layout_marginLeft="@dimen/activity_horizontal_margin"/>
+
+    <Button
+        android:layout_width="160dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/qr"
+        android:layout_gravity="right"
+        android:background="#CD5555"
+        android:layout_marginRight="@dimen/activity_vertical_margin"/>
+
+    <TextView
+        android:layout_width="323dp"
+        android:layout_height="wrap_content"
+        android:text="Arrivée : "
+        android:textStyle="bold"
+        android:textColor="#FF0000"
+        android:textSize="50dp"
+        android:gravity="center"
+        android:layout_weight="0.22"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="14dp"/>
+
+    <TextView
+        android:layout_width="113dp"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:id="@+id/mag_arr"
+        android:layout_below="@+id/mag_arr"
+        android:layout_centerHorizontal="true"
+        android:layout_weight="0.09"
+        android:layout_gravity="center_horizontal" />
+
+    <Button
+        android:layout_width="190dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/arrivee"
+        android:background="#CD5555"
+        android:layout_gravity="center_horizontal" />
+
+    <Button
+        android:layout_width="334dp"
+        android:layout_height="37dp"
+        android:id="@+id/ok"
+        android:text="Afficher l&apos;itinéraire sur la carte"
+        android:background="@color/colorPrimary"
+        android:textStyle="bold"
+        android:layout_marginLeft="@dimen/activity_horizontal_margin"
+        android:layout_marginTop="50dp"/>
+</LinearLayout>

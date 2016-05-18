@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:android="http://schemas.android.com/tools">
     <string name="app_name">C.O.B.R.A.</string>
 
     <string name="choix_etage">Choissisez un etage</string>
@@ -12,5 +12,9 @@
     <string name="rest">Mobilité réduite ?</string>
 
     <string name="qr">Scanner un QR code</string>
+
+    <string name="dep">  Départ</string>
+
+    <string name="arr">  Arrivée</string>
 
 </resources>

@@ -2,17 +2,12 @@ package com.example.formation.androidprojet_v1;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.esri.core.geometry.Geometry;
-import com.esri.core.geometry.SpatialReference;
-import com.esri.core.map.Graphic;
-import com.esri.core.symbol.SimpleMarkerSymbol;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
@@ -22,7 +17,11 @@ import java.util.ArrayList;
  * Vue du choix de l'itinéraire
  */
 public class Choix extends Activity {
-    // Initialisation des variables
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////// VARIABLES : ///////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
     private TextView t_dep;
     private TextView t_arr;
     private Button type_arr;
@@ -31,16 +30,18 @@ public class Choix extends Activity {
     private Button ok;
     private String mag_dep;
     private String mag_ar;
-    private String niv_ar;
-    private String niv_dep;
 
-    ///////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////// METHODES : ////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.choix_magasin);
 
-        // import des données transmises par l'activité principale
+        //////////////////////////////////// Import :  /////////////////////////////////////////////
+        // Import des données transmises par l'activité principale
         Intent intent_choix = getIntent();
         final ArrayList lst_mag0 = intent_choix.getStringArrayListExtra("Liste_mag0");
         final ArrayList lst_mag1 = intent_choix.getStringArrayListExtra("Liste_mag1");
@@ -49,6 +50,7 @@ public class Choix extends Activity {
         final ArrayList lst_type1 = intent_choix.getStringArrayListExtra("Liste_type1");
         final ArrayList lst_type2 = intent_choix.getStringArrayListExtra("Liste_type2");
 
+        //////////////////////////////////// Affichage :  //////////////////////////////////////////
         // Affichage du texte
         t_dep=(TextView)findViewById(R.id.mag_dep);
         t_dep.setText("Magasin de départ");
@@ -62,14 +64,13 @@ public class Choix extends Activity {
         type_arr = (Button) findViewById(R.id.arrivee);
         type_arr.setText("Par type");
         ok = (Button) findViewById(R.id.ok);
-        ok.setText("OK");
+        ok.setText("Go!");
 
-
-        // Fonctions des boutons
+        //////////////////////////////////// Listeners :  //////////////////////////////////////////
         type_dep.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // on lance la liste des types de magasins lors du clic
+                // On lance la liste des types de magasins lors du clic
                 Intent intent_type = new Intent(Choix.this, Listetype.class);
                 intent_type.putExtra("Liste_mag0", lst_mag0);
                 intent_type.putExtra("Liste_mag1", lst_mag1);
@@ -81,20 +82,11 @@ public class Choix extends Activity {
 
             }
         });
-        qr.setOnClickListener(new View.OnClickListener() {
-            //QR code
-            @Override
-            public void onClick(View v) {
-                //QR code
-                // on lance le scanner au clic sur notre bouton
-                IntentIntegrator integrator = new IntentIntegrator(Choix.this);
-                integrator.initiateScan();
-            }
-        });
+
         type_arr.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // on lance la liste des types de magasins lors du clic
+                // On lance la liste des types de magasins lors du clic
                 Intent intent_type = new Intent(Choix.this, Listetype.class);
                 intent_type.putExtra("Liste_mag0", lst_mag0);
                 intent_type.putExtra("Liste_mag1", lst_mag1);
@@ -105,24 +97,35 @@ public class Choix extends Activity {
                 startActivityForResult(intent_type, 2);
             }
         });
+
+        qr.setOnClickListener(new View.OnClickListener() {
+            //QR code
+            @Override
+            public void onClick(View v) {
+                //QR code
+                // On lance le scanner au clic sur notre bouton
+                IntentIntegrator integrator = new IntentIntegrator(Choix.this);
+                integrator.initiateScan();
+            }
+        });
+
         ok.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
+                // Envoie au click des données à mainActivity
                 if (mag_dep!= null&& mag_ar!=null ){
                     Intent intent_req = new Intent(Choix.this, MainActivity.class);
                     intent_req.putExtra("Depart", mag_dep);
                     intent_req.putExtra("Arrivee", mag_ar);
-                    intent_req.putExtra("Niv_ar", niv_ar);
-                    intent_req.putExtra("Niv_dep", niv_dep);
                     setResult(RESULT_OK, intent_req);
                     finish();
                 }
             }
         });
-
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
+
     // Retour des différentes activités et utilisation de leurs données
     protected void onActivityResult(int requestCode, int resultCode, Intent intent_req) {
         IntentResult scanningResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, intent_req);
@@ -148,19 +151,15 @@ public class Choix extends Activity {
                 if (String.valueOf(resultCode) == String.valueOf(RESULT_OK)) {
                     t_arr.setText(intent_req.getStringExtra("mag"));
                     mag_ar = intent_req.getStringExtra("mag");
-                    niv_ar = intent_req.getStringExtra("niveau");
                 }
             }
             if (String.valueOf(requestCode) == String.valueOf(3)) {
                 if (String.valueOf(resultCode) == String.valueOf(RESULT_OK)) {
                     t_dep.setText(intent_req.getStringExtra("mag"));
                     mag_dep = intent_req.getStringExtra("mag");
-                    niv_dep = intent_req.getStringExtra("niveau");
-
                 }
             }
         }
 
     }
-
 }
