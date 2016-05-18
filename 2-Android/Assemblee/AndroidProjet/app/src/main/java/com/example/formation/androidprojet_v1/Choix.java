@@ -64,7 +64,7 @@ public class Choix extends Activity {
         type_arr = (Button) findViewById(R.id.arrivee);
         type_arr.setText("Par type");
         ok = (Button) findViewById(R.id.ok);
-        ok.setText("OK");
+        ok.setText("Go!");
 
         //////////////////////////////////// Listeners :  //////////////////////////////////////////
         type_dep.setOnClickListener(new View.OnClickListener() {

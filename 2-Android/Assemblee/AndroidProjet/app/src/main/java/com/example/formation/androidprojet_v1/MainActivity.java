@@ -77,19 +77,20 @@ public class MainActivity extends AppCompatActivity {
 
     // TODO : chemin qui change en fonction SD card ou non : trouver automatiquement
 
+    /*
     // Sd card :
-    private final String chTpk = "/ProjArcades/ArcGIS/";
-     /*
+    private final String chTpk = "/ProjArcades/ArcGIS/";*/
+
     // Sans sd card :
     private final String chTpk = "/Android/data/com.example.formation.androidprojet_v1/ArcGIS/";
-    */
+
 
     //////////////////////////////////// Image de fond  : //////////////////////////////////////////
     private String tpkPath  = chTpk +"arcades.tpk";
     private String tpkPath0 = chTpk +"niveau_0.tpk";
     private String tpkPath1 = chTpk +"niveau_1.tpk";
     private String tpkPath2 = chTpk +"niveau_2.tpk";
-    private String tpkPath3 = chTpk +"logoSelected.tpk";
+    private String tpkPath3 = chTpk +"logo.tpk";
 
     private TiledLayer mTileLayer = new ArcGISLocalTiledLayer(extern + tpkPath);
     private TiledLayer mTileLayer0 = new ArcGISLocalTiledLayer(extern + tpkPath0);
@@ -262,6 +263,9 @@ public class MainActivity extends AppCompatActivity {
 
         mMapView.addLayer(mTileLayer2);
         mTileLayer2.setVisible(false);
+
+        mMapView.addLayer(mTileLayer3);
+        mTileLayer3.setVisible(false);
 
         mMapView.addLayer(mTileLayer);
         mTileLayer.setVisible(false);
