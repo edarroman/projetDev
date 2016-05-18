@@ -30,12 +30,15 @@ import com.esri.android.map.TiledLayer;
 import com.esri.android.map.ags.ArcGISLocalTiledLayer;
 import com.esri.core.geodatabase.Geodatabase;
 import com.esri.core.geodatabase.GeodatabaseFeatureTable;
+import com.esri.core.geometry.Envelope;
 import com.esri.core.geometry.Geometry;
 import com.esri.core.geometry.GeometryEngine;
 import com.esri.core.geometry.LinearUnit;
+import com.esri.core.geometry.Point;
 import com.esri.core.geometry.Polygon;
 import com.esri.core.geometry.Polyline;
 import com.esri.core.geometry.SpatialReference;
+import com.esri.core.geometry.Transformation2D;
 import com.esri.core.geometry.Unit;
 import com.esri.core.map.Feature;
 import com.esri.core.map.Graphic;
@@ -77,13 +80,13 @@ public class MainActivity extends AppCompatActivity {
 
     // TODO : chemin qui change en fonction SD card ou non : trouver automatiquement
 
-    /*
-    // Sd card :
-    private final String chTpk = "/ProjArcades/ArcGIS/";*/
 
+    // Sd card :
+    private final String chTpk = "/ProjArcades/ArcGIS/";
+/*
     // Sans sd card :
     private final String chTpk = "/Android/data/com.example.formation.androidprojet_v1/ArcGIS/";
-
+*/
 
     //////////////////////////////////// Image de fond  : //////////////////////////////////////////
     private String tpkPath  = chTpk +"arcades.tpk";
@@ -156,7 +159,7 @@ public class MainActivity extends AppCompatActivity {
     private Feature[] mag_niv1 = new Feature[66];
     private Feature[] mag_niv2 = new Feature[64];
     // Geometries :
-    private Geometry[] mag_niv0_geom = new Geometry[12];
+    private Geometry[] mag_niv0_geom = new Geometry[13];
     private Geometry[] mag_niv1_geom = new Geometry[66];
     private Geometry[] mag_niv2_geom = new Geometry[64];
     // Geometries projetees :
@@ -333,8 +336,11 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("QR_code","QR code 01");
                 // On marque la geometrie du QR code sur la carte
                 // Rappel,on test avec le magasin "La grande recre"
-                Geometry projection = geomen.project(geom_QR_code, WKID_RGF93, mapRef);
-                mGraphicsLayer.addGraphic(new Graphic(projection, new SimpleMarkerSymbol(Color.RED, 10, STYLE.CROSS)));
+                depart = geomen.project(geom_QR_code, WKID_RGF93, mapRef);
+                ajouterPoint(depart, symDep);
+                afficherNom("La grande récré", depart);
+                textViewDep.setText("La grande récré");
+                //mGraphicsLayer.addGraphic(new Graphic(projection, new SimpleMarkerSymbol(Color.RED, 10, STYLE.CROSS)));
                 //mMapView.getCallout().hide();
             }
             if(scanContent.equals( "QR code 02" ) ) {Log.d("QR_code","QR code 02");}
@@ -362,10 +368,14 @@ public class MainActivity extends AppCompatActivity {
                     Geometry ptDep = trouverPtSel(mag_dep, true);
                     depart = geomen.project(ptDep, WKID_RGF93, mapRef);
                     ajouterPoint(depart, symDep);
+                    textViewDep.setText(mag_dep);
+                    afficherNom(mag_dep ,depart);
 
                     Geometry ptArr =trouverPtSel(mag_arr, false);
                     arrive = geomen.project(ptArr, WKID_RGF93, mapRef);
                     ajouterPoint(arrive, symArr);
+                    textViewArr.setText(mag_arr);
+                    afficherNom(mag_arr, arrive);
 
                     // On récupére à nouveau le nombre de stop :
                     tStop = mStops.getFeatures().size();
@@ -770,7 +780,7 @@ public class MainActivity extends AppCompatActivity {
             //////////////////////////////////// Récupération des géométries, noms type : //////////
 
             // Etage 0
-            int len0 = mag_niv0.length;
+            int len0 = mag_niv0.length -1 ;
             for(int k=0; k<len0; k++) {
 
                 Feature Mag =  mag_niv0[k];
@@ -786,7 +796,7 @@ public class MainActivity extends AppCompatActivity {
                 lst_mag_niveau0.add(nom_mag);
                 lst_nom_mag.add(nom_mag);
             }
-
+            
             // Etage 1
             int len1 = mag_niv1.length;
             for(int k=0; k<len1; k++) {
