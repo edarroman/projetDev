@@ -39,19 +39,24 @@
 
         <Spinner
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="50dp"
             android:id="@+id/spinnerEtgSelc"
             android:entries="@array/etage_array"
-            android:prompt="@string/choix_etage"
-            android:layout_alignParentBottom="true"
-            android:layout_alignParentRight="true"
-            android:layout_alignParentEnd="true" />
+            android:background="@color/colorPrimary"
+            android:popupBackground="@color/colorPrimary"
+            android:spinnerMode="dropdown"
+            android:dropDownSelector="@color/colorPrimary"
+            android:layout_above="@+id/scan_format"
+            android:layout_marginLeft="5dp"
+            android:layout_marginRight="220dp"/>
 
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+        <ImageView
+            android:layout_width="50dp"
+            android:layout_height="50dp"
             android:id="@+id/scan_button"
-            android:layout_below="@+id/directionsSpinner"
+            android:clickable="true"
+            android:src="@drawable/qr1"
+            android:layout_alignTop="@+id/handicap"
             android:layout_centerHorizontal="true" />
 
         <TextView
@@ -71,32 +76,63 @@
             android:layout_centerHorizontal="true" />
 
         <CheckBox
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/checkBoxRes"
-            android:checked="false" />
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:id="@+id/handicap"
+            android:checked="false"
+            android:button="@drawable/checked"
+            android:scaleType="fitCenter"
+            android:adjustViewBounds = "true"
 
-        <AutoCompleteTextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/dep_magasin"
-            android:layout_centerVertical="true"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentStart="true"
-            android:ems="10">
-            <requestFocus />
-        </AutoCompleteTextView>
-
-        <AutoCompleteTextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/arr_magasin"
-            android:layout_centerVertical="true"
+            android:layout_marginBottom="80dp"
+            android:layout_alignParentBottom="true"
             android:layout_alignParentRight="true"
-            android:layout_alignParentStart="true"
-            android:ems="10">
-            <requestFocus />
-        </AutoCompleteTextView>
+            android:layout_alignParentEnd="true"
+            android:layout_marginRight="30dp"
+            android:layout_marginEnd="30dp" />
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="120dp"
+                android:background="@color/colorPrimary"/>
+
+            <RelativeLayout
+                android:layout_width="300dp"
+                android:layout_height="wrap_content">
+                <AutoCompleteTextView
+                    android:layout_width="300dp"
+                    android:layout_height="40dp"
+                    android:id="@+id/dep_magasin"
+                    android:ems="10"
+                    android:background="#ffffff"
+                    android:layout_marginTop="10dp"
+                    android:layout_alignParentTop="true"
+                    android:layout_alignParentLeft="true"
+                    android:layout_alignParentStart="true"
+                    android:layout_marginLeft="15dp"
+                    android:layout_marginStart="15dp"
+                    >
+                    <requestFocus />
+                </AutoCompleteTextView>
+
+                <AutoCompleteTextView
+                    android:layout_width="300dp"
+                    android:layout_height="40dp"
+                    android:id="@+id/arr_magasin"
+                    android:ems="10"
+                    android:background="#ffffff"
+                    android:layout_below="@+id/dep_magasin"
+                    android:layout_alignLeft="@+id/dep_magasin"
+                    android:layout_alignParentRight="true"
+                    android:layout_alignParentEnd="true"
+                    android:layout_marginTop="15dp">
+                </AutoCompleteTextView>
+            </RelativeLayout>
+        </FrameLayout>
 
     </RelativeLayout>
 
