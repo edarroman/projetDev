@@ -786,7 +786,7 @@ public class MainActivity extends AppCompatActivity {
                 Feature Mag =  mag_niv0[k];
 
                 // Récupération géométrie :
-                mag_niv0_geom[k] = mag_niv0[k].getGeometry();
+                mag_niv0_geom[k] = Mag.getGeometry();
 
                 // Récupération nom et type :
                 Map<String, Object> lignes = Mag.getAttributes();
@@ -804,7 +804,7 @@ public class MainActivity extends AppCompatActivity {
                 Feature Mag =  mag_niv1[k];
 
                 // Récupération géométrie :
-                mag_niv1_geom[k] = mag_niv1[k].getGeometry();
+                mag_niv1_geom[k] = Mag.getGeometry();
 
                 // Récupération nom et type :
                 Map<String, Object> lignes = Mag.getAttributes();
@@ -822,7 +822,7 @@ public class MainActivity extends AppCompatActivity {
                 Feature Mag =  mag_niv2[k];
 
                 // Récupération géométrie :
-                mag_niv2_geom[k] = mag_niv2[k].getGeometry();
+                mag_niv2_geom[k] = Mag.getGeometry();
 
                 // Récupération nom et type :
                 Map<String, Object> lignes = Mag.getAttributes();
